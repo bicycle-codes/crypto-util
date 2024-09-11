@@ -130,3 +130,7 @@ export function arrBufToStr (buf:ArrayBuffer, charSize:CharSize):string {
         .map(b => String.fromCharCode(b))
         .join('')
 }
+
+export function publicExponent ():Uint8Array {
+    return new Uint8Array([0x01, 0x00, 0x01])
+}

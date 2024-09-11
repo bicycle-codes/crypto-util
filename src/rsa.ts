@@ -12,10 +12,11 @@ import {
     base64ToArrBuf,
     normalizeBase64ToBuf,
     normalizeUnicodeToBuf,
-    isCryptoKey
+    isCryptoKey,
+    publicExponent
 } from './util'
 import { KeyUse } from './types'
-import type { Msg, CharSize, HashAlg } from './types'
+import type { RsaSize, Msg, CharSize, HashAlg } from './types'
 
 export async function verify (
     msg:Msg,
@@ -119,4 +120,25 @@ export function importRsaKey (
         false,
         keyUsages
     )
+}
+
+export async function create (
+    size:RsaSize,
+    hashAlg:HashAlg,
+    use:KeyUse
+):Promise<CryptoKeyPair> {
+    if (!(Object.values(KeyUse).includes(use))) {
+        throw new Error('invalid key use')
+    }
+    const alg = use === KeyUse.Encrypt ? RSA_ALGORITHM : RSA_SIGN_ALGORITHM
+    const uses:KeyUsage[] = (use === KeyUse.Encrypt ?
+        ['encrypt', 'decrypt'] :
+        ['sign', 'verify'])
+
+    return webcrypto.subtle.generateKey({
+        name: alg,
+        modulusLength: size,
+        publicExponent: publicExponent(),
+        hash: { name: hashAlg }
+    }, false, uses)
 }
