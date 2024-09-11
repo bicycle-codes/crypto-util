@@ -28,22 +28,37 @@ export const did:{ keyTypes:KeyTypes } = {
 
         ed25519: {
             magicBytes: new Uint8Array([0xed, 0x01]),
+
+            /**
+             * Verify an ECC signtaure.
+             *
+             * @param {{
+             *   message,
+             *   publickKey,
+             *   signature
+             * }} opts Message, public key, and signature
+             * @returns {Promise<boolean>}
+             */
             verify: async function ed25519Verify ({
-                message,
-                publicKey,
-                signature
+                message: msg,
+                publicKey: key,
+                signature: sig
             }:{
                 message:Uint8Array
                 publicKey:Uint8Array
                 signature:Uint8Array
             }):Promise<boolean> {
-                return tweetnacl.sign.detached.verify(message, signature, publicKey)
+                return tweetnacl.sign.detached.verify(msg, sig, key)
             }
 
         },
 
         rsa: {
             magicBytes: new Uint8Array([0x00, 0xf5, 0x02]),
+
+            /**
+             * Verify an RSA signature.
+             */
             verify: async ({ message, publicKey, signature }:{
                 message:Uint8Array,
                 publicKey:Uint8Array,
@@ -52,7 +67,7 @@ export const did:{ keyTypes:KeyTypes } = {
                 return rsaVerify(
                     message,
                     signature,
-                    await importPublicKey(
+                    await importRsaPublicKey(
                         publicKey,
                         HashAlg.SHA_256,
                         KeyUse.Encrypt
@@ -86,7 +101,7 @@ export function publicKeyToDid (
         uint8arrays.toString(prefixedBuf, 'base58btc')) as DID
 }
 
-export async function importPublicKey (
+export async function importRsaPublicKey (
     base64Key:string|ArrayBuffer,
     hashAlg:HashAlg,
     use:KeyUse
