@@ -1,5 +1,7 @@
 import { test } from '@bicycle-codes/tapzero'
+import { create } from '../src/aes.js'
 
-test('example', async t => {
-    t.ok('ok', 'should be an example')
+test('pubic key to DID', async t => {
+    const aesKey = await create()
+    t.ok(aesKey instanceof CryptoKey, 'Should return a CryptoKey')
 })

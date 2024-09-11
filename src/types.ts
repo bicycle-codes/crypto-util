@@ -1,5 +1,17 @@
 export type DID = `did:key:z${string}`
 export type Msg = ArrayBuffer|string|Uint8Array
+export type PrivateKey = CryptoKey
+export type PublicKey = CryptoKey
+export type SymmKey = CryptoKey
+export type CipherText = ArrayBuffer
+
+export type SymmAlg = 'AES-CTR'|'AES-CBC'|'AES-GCM'
+
+export enum EccCurve {
+    P_256 = 'P-256',
+    P_384 = 'P-384',
+    P_521 = 'P-521',
+}
 
 export enum RsaSize {
     B1024 = 1024,
@@ -11,6 +23,12 @@ export enum SymmKeyLength {
     B128 = 128,
     B192 = 192,
     B256 = 256,
+}
+
+export type SymmKeyOpts = {
+    alg:SymmAlg
+    length:SymmKeyLength
+    iv:ArrayBuffer
 }
 
 export enum HashAlg {
@@ -30,6 +48,8 @@ export enum KeyUse {
     Sign = 'signing',  // sign
 }
 
+export type KeyAlgorithm = 'bls12-381'|'ed25519'|'rsa'
+
 /**
  * Using the key type as the record property name (ie. string = key type)
  *
@@ -41,16 +61,15 @@ export enum KeyUse {
  *
  * Example
  * -------
- * Ed25519 public key
+ * _Ed25519 public key_
  * Key type: "ed25519"
  * Magic bytes: [ 0xed, 0x01 ]
  */
-export type KeyTypes = Record<string, {
+export type KeyTypes = Record<KeyAlgorithm, {
     magicBytes:Uint8Array
     verify:(args:{
-        message: Uint8Array
-        publicKey: Uint8Array
-        signature: Uint8Array
-    }) => Promise<boolean>
+        message:Uint8Array
+        publicKey:Uint8Array
+        signature:Uint8Array
+    })=>Promise<boolean>
 }>
-

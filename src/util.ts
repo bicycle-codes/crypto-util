@@ -1,13 +1,8 @@
 import * as uint8arrays from 'uint8arrays'
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
-import type { Msg, HashAlg } from './types'
-import { KeyUse, CharSize } from './types'
-import {
-    RSA_HASHING_ALGORITHM,
-    RSA_ALGORITHM,
-    RSA_SIGN_ALGORITHM,
-} from './constants.js'
-import { InvalidMaxValue, checkValidKeyUse } from './errors'
+import type { Msg } from './types'
+import { CharSize } from './types'
+import { InvalidMaxValue } from './errors'
 
 export const normalizeToBuf = (
     msg:Msg,
@@ -86,19 +81,6 @@ export function randomBuf (
     return arr.buffer
 }
 
-export function importRsaKey (
-    key:Uint8Array,
-    keyUsages:KeyUsage[]
-):Promise<CryptoKey> {
-    return webcrypto.subtle.importKey(
-        'spki',
-        key,
-        { name: RSA_ALGORITHM, hash: RSA_HASHING_ALGORITHM },
-        false,
-        keyUsages
-    )
-}
-
 export function joinBufs (fst:ArrayBuffer, snd:ArrayBuffer):ArrayBuffer {
     const view1 = new Uint8Array(fst)
     const view2 = new Uint8Array(snd)
@@ -118,32 +100,6 @@ export function base64ToArrBuf (string:string):ArrayBuffer {
 
 export async function sha256 (bytes:Uint8Array):Promise<Uint8Array> {
     return new Uint8Array(await webcrypto.subtle.digest('sha-256', bytes))
-}
-
-export async function importPublicKey (
-    base64Key:string|ArrayBuffer,
-    hashAlg:HashAlg,
-    use:KeyUse
-):Promise<CryptoKey> {
-    checkValidKeyUse(use)
-    const alg = (use === KeyUse.Encrypt ? RSA_ALGORITHM : RSA_SIGN_ALGORITHM)
-    const uses:KeyUsage[] = use === KeyUse.Encrypt ?
-        ['encrypt'] :
-        ['verify']
-    const buf = typeof base64Key === 'string' ?
-        base64ToArrBuf(stripKeyHeader(base64Key)) :
-        base64Key
-
-    return webcrypto.subtle.importKey('spki', buf, {
-        name: alg,
-        hash: { name: hashAlg }
-    }, true, uses)
-}
-
-function stripKeyHeader (base64Key:string):string {
-    return base64Key
-        .replace('-----BEGIN PUBLIC KEY-----\n', '')
-        .replace('\n-----END PUBLIC KEY-----', '')
 }
 
 export function isCryptoKeyPair (val:unknown):val is CryptoKeyPair {
@@ -166,4 +122,11 @@ export function hasProp<K extends PropertyKey> (
     prop:K
 ):data is Record<K, unknown> {
     return (typeof data === 'object' && data != null && prop in data)
+}
+
+export function arrBufToStr (buf:ArrayBuffer, charSize:CharSize):string {
+    const arr = charSize === 8 ? new Uint8Array(buf) : new Uint16Array(buf)
+    return Array.from(arr)
+        .map(b => String.fromCharCode(b))
+        .join('')
 }
