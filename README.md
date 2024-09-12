@@ -16,6 +16,12 @@ Utility functions for working with crypto keys in the browser or node.
 <!-- toc -->
 
 - [install](#install)
+- [example](#example)
+  * [Create a new keypair](#create-a-new-keypair)
+  * [Use 2 ECC keypairs to create a new AES key](#use-2-ecc-keypairs-to-create-a-new-aes-key)
+  * [Encrypt a message with an AES key](#encrypt-a-message-with-an-aes-key)
+  * [Decrypt with AES keys](#decrypt-with-aes-keys)
+  * [encrypt with ECC keys](#encrypt-with-ecc-keys)
 - [API](#api)
   * [ESM](#esm)
   * [Common JS](#common-js)
