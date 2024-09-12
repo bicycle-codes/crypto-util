@@ -98,7 +98,6 @@ test('RSA decrypt a Uint8Array AES key', async t => {
 //
 // ECC
 //
-
 let eccKeypair:CryptoKeyPair
 let eccSignKeys:CryptoKeyPair
 test('create an ECC keypair', async t => {
@@ -156,21 +155,32 @@ test('alice and bob can decrypt the message', async t => {
     t.equal(bobsMessage, 'hello ECC', 'Bob can decrypt by calling ecc.decrypt')
 })
 
+let eccEncryptedText:string
 test('Can encrypt with ecc.encrypt', async t => {
-    const encrypted = await eccEncrypt(
+    eccEncryptedText = await eccEncrypt(
         'hello ecc',
         eccKeypair.privateKey,
         BobsKeys.publicKey
     )
 
-    t.equal(typeof encrypted, 'string', 'should return a string')
-    console.log('*encrypted**', encrypted)
+    t.equal(typeof eccEncryptedText, 'string',
+        'should return a string by default')
+})
 
+test('Can decrypt with ecc.decrypt', async t => {
     const decrypted = await eccDecrypt(
-        encrypted,
+        eccEncryptedText,
         eccKeypair.privateKey,
         BobsKeys.publicKey
     )
 
     t.equal(decrypted, 'hello ecc', 'should decrypt to the right text')
+
+    const bobsDecrypted = await eccDecrypt(
+        eccEncryptedText,
+        BobsKeys.privateKey,
+        eccKeypair.publicKey
+    )
+
+    t.equal(bobsDecrypted, 'hello ecc', 'bob can decrypt it too')
 })

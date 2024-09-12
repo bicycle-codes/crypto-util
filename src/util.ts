@@ -3,6 +3,7 @@ import { webcrypto } from '@bicycle-codes/one-webcrypto'
 import type { Msg } from './types'
 import { CharSize } from './types'
 import { InvalidMaxValue } from './errors'
+import { DEFAULT_CHAR_SIZE } from './constants'
 
 export const normalizeToBuf = (
     msg:Msg,
@@ -31,14 +32,20 @@ export const normalizeUtf16ToBuf = (msg:Msg): ArrayBuffer => {
     return normalizeToBuf(msg, (str) => strToArrBuf(str, CharSize.B16))
 }
 
-export function normalizeUnicodeToBuf (msg:Msg, charSize:CharSize) {
+export function normalizeUnicodeToBuf (
+    msg:Msg,
+    charSize:CharSize = DEFAULT_CHAR_SIZE
+) {
     switch (charSize) {
         case 8: return normalizeUtf8ToBuf(msg)
         default: return normalizeUtf16ToBuf(msg)
     }
 }
 
-export function strToArrBuf (str:string, charSize:CharSize):ArrayBuffer {
+export function strToArrBuf (
+    str:string,
+    charSize:CharSize = DEFAULT_CHAR_SIZE
+):ArrayBuffer {
     const view = charSize === 8 ?
         new Uint8Array(str.length) :
         new Uint16Array(str.length)
@@ -128,7 +135,10 @@ export function hasProp<K extends PropertyKey> (
     return (typeof data === 'object' && data != null && prop in data)
 }
 
-export function arrBufToStr (buf:ArrayBuffer, charSize:CharSize):string {
+export function arrBufToStr (
+    buf:ArrayBuffer,
+    charSize:CharSize = DEFAULT_CHAR_SIZE
+):string {
     const arr = charSize === 8 ? new Uint8Array(buf) : new Uint16Array(buf)
     return Array.from(arr)
         .map(b => String.fromCharCode(b))

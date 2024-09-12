@@ -3,15 +3,16 @@ import {
     DEFAULT_SYMM_ALGORITHM,
     DEFAULT_CTR_LEN,
     DEFAULT_SYMM_LEN,
+    DEFAULT_CHAR_SIZE,
 } from './constants.js'
 import {
+    CharSize,
     type CipherText,
     type SymmKey,
     type Msg,
     type SymmKeyLength,
     type SymmKeyOpts,
-    type SymmAlg,
-    CharSize,
+    type SymmAlg
 } from './types.js'
 import {
     randomBuf,
@@ -20,22 +21,27 @@ import {
     normalizeBase64ToBuf,
     arrBufToBase64,
     arrBufToStr,
-    base64ToArrBuf
+    base64ToArrBuf,
+    normalizeUtf8ToBuf
 } from './util.js'
 
 export async function encryptBytes (
     msg:Msg,
-    key:SymmKey | string,
+    key:SymmKey|string,
     opts?:Partial<{
         alg:SymmAlg
         length:SymmKeyLength
         iv:ArrayBuffer
-    }>
-): Promise<CipherText> {
-    const data = normalizeUtf16ToBuf(msg)
+    }>,
+    charSize:CharSize = DEFAULT_CHAR_SIZE
+):Promise<CipherText> {
+    const data = charSize === CharSize.B8 ?
+        normalizeUtf8ToBuf(msg) :
+        normalizeUtf16ToBuf(msg)
+
     const importedKey = typeof key === 'string' ? await importKey(key, opts) : key
     const alg = opts?.alg || DEFAULT_SYMM_ALGORITHM
-    const iv = opts?.iv || randomBuf(16)
+    const iv = opts?.iv || randomBuf(12)
     const cipherBuf = await webcrypto.subtle.encrypt(
         {
             name: alg,
@@ -47,6 +53,7 @@ export async function encryptBytes (
         importedKey,
         data
     )
+
     return joinBufs(iv, cipherBuf)
 }
 
@@ -54,12 +61,12 @@ export async function decryptBytes (
     msg: Msg,
     key: SymmKey | string,
     opts?: Partial<SymmKeyOpts>
-): Promise<ArrayBuffer> {
+):Promise<ArrayBuffer> {
     const cipherText = normalizeBase64ToBuf(msg)
     const importedKey = typeof key === 'string' ? await importKey(key, opts) : key
     const alg = opts?.alg || DEFAULT_SYMM_ALGORITHM
-    const iv = cipherText.slice(0, 16)
-    const cipherBytes = cipherText.slice(16)
+    const iv = cipherText.slice(0, 12)
+    const cipherBytes = cipherText.slice(12)
     const msgBuff = await webcrypto.subtle.decrypt(
         {
             name: alg,
@@ -87,10 +94,10 @@ export async function decrypt (
     msg:Msg,
     key:SymmKey|string,
     opts?:Partial<SymmKeyOpts>,
-    charSize?:CharSize
+    charSize:CharSize = DEFAULT_CHAR_SIZE
 ):Promise<string> {
     const msgBytes = await decryptBytes(msg, key, opts)
-    return arrBufToStr(msgBytes, charSize || CharSize.B8)
+    return arrBufToStr(msgBytes, charSize)
 }
 
 export async function exportKey (key:SymmKey):Promise<Uint8Array> {
