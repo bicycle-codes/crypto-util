@@ -129,7 +129,7 @@ export async function encrypt (
  * Decrypt the given Uint8Array
  */
 export async function decrypt (
-    data:Uint8Array,
+    data:Uint8Array|string,
     privateKey:CryptoKey|Uint8Array
 ):Promise<Uint8Array> {
     const key = isCryptoKey(privateKey) ?
@@ -139,7 +139,7 @@ export async function decrypt (
     const arrayBuffer = await webcrypto.subtle.decrypt(
         { name: RSA_ALGORITHM },
         key,
-        data
+        typeof data === 'string' ? fromString(data, 'base64pad') : data
     )
 
     const arr = new Uint8Array(arrayBuffer)
