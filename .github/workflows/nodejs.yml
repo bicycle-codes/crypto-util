@@ -25,7 +25,10 @@ jobs:
         npm run lint
       env:
         CI: true
-    - name: Run tape tests
+    - name: Run node tests
       run: |
-        npm run build-tests
+        npm run test:node
+    - name: Run browser tests
+      run: |
+        npm run build-tests:browser
         xvfb-run --server-args="-screen 0 1920x1080x24" npm run test-tape-run

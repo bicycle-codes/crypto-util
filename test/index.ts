@@ -137,10 +137,6 @@ test('alice and bob can decrypt the message', async t => {
     const dec = await aesDecrypt(eccEncryptedMsg, sharedKey)
     t.equal(dec, 'hello ECC', 'can decrypt with a shared key')
 
-    const decrypted = await aesDecrypt(eccEncryptedMsg, sharedKey)
-    t.equal(decrypted, 'hello ECC',
-        'can decrypt with the previously derived key')
-
     const alicesMessage = await eccDecrypt(
         eccEncryptedMsg,
         eccKeypair.privateKey,
@@ -155,5 +151,5 @@ test('alice and bob can decrypt the message', async t => {
         eccKeypair.publicKey
     )
 
-    t.equal(bobsMessage, 'hello ECC', 'Bob can decrypt the message')
+    t.equal(bobsMessage, 'hello ECC', 'Bob can decrypt by calling .decrypt')
 })
