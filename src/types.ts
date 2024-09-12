@@ -67,9 +67,4 @@ export type KeyAlgorithm = 'bls12-381'|'ed25519'|'rsa'
  */
 export type KeyTypes = Record<KeyAlgorithm, {
     magicBytes:Uint8Array
-    verify:(args:{
-        message:Uint8Array
-        publicKey:Uint8Array
-        signature:Uint8Array
-    })=>Promise<boolean>
 }>

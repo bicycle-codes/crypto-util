@@ -143,12 +143,6 @@ export async function importPublicKey (
     }, true, uses)
 }
 
-function stripKeyHeader (base64Key:string):string {
-    return base64Key
-        .replace('-----BEGIN PUBLIC KEY-----\n', '')
-        .replace('\n-----END PUBLIC KEY-----', '')
-}
-
 export function importRsaKey (
     key:Uint8Array,
     keyUsages:KeyUsage[]
@@ -181,4 +175,30 @@ export async function create (
         publicExponent: publicExponent(),
         hash: { name: hashAlg }
     }, false, uses)
+}
+
+export async function importRsaPublicKey (
+    base64Key:string|ArrayBuffer,
+    hashAlg:HashAlg,
+    use:KeyUse
+):Promise<CryptoKey> {
+    checkValidKeyUse(use)
+    const alg = (use === KeyUse.Encrypt ? RSA_ALGORITHM : RSA_SIGN_ALGORITHM)
+    const uses:KeyUsage[] = use === KeyUse.Encrypt ?
+        ['encrypt'] :
+        ['verify']
+    const buf = typeof base64Key === 'string' ?
+        base64ToArrBuf(stripKeyHeader(base64Key)) :
+        base64Key
+
+    return webcrypto.subtle.importKey('spki', buf, {
+        name: alg,
+        hash: { name: hashAlg }
+    }, true, uses)
+}
+
+function stripKeyHeader (base64Key:string):string {
+    return base64Key
+        .replace('-----BEGIN PUBLIC KEY-----\n', '')
+        .replace('\n-----END PUBLIC KEY-----', '')
 }

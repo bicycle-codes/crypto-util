@@ -1,5 +1,10 @@
 {
-  "private": true,
+  "name": "@bicycle-codes/crypto-util",
+  "description": "Cryptography utility functions for the browser or node",
+  "directories": {
+    "example": "example",
+    "test": "test"
+  },
   "type": "module",
   "version": "0.0.0",
   "main": "dist/index.js",
@@ -9,7 +14,7 @@
   "scripts": {
     "lint": "eslint \"./**/*.{ts,js}\"",
     "test": "npm run lint && bash -c 'cd ./test && npx esbuild --bundle index.ts | node --input-type=module' | tap-spec",
-    "test:node": "bash -c 'cd ./test && npx esbuild --bundle index.ts | node --input-type=module' | tap-spec",
+    "test:node": "bash -c 'cd ./test && npx esbuild --format=esm --platform=node --bundle index.ts | node --input-type=module' | tap-spec",
     "build-tests:browser": "esbuild test/index.ts --target=es2020 --bundle --keep-names > test/test-bundle.js",
     "test:browser": "npm run lint && npm run build && npm run build-tests:browser && npm run test-tape-run",
     "test-tape-run": "cat test/index.html | tape-run --input=html --static=test | tap-spec",
@@ -26,6 +31,10 @@
     "version": "npm run toc && auto-changelog -p --template keepachangelog --breaking-pattern 'BREAKING CHANGE:' && git add CHANGELOG.md README.md",
     "postversion": "git push --follow-tags && npm publish",
     "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@bicycle-codes/one-webcrypto": "^1.1.2",
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
     "@bicycle-codes/debug": "^0.6.13",
@@ -66,8 +75,18 @@
   },
   "author": "nichoth <nichoth@nichoth.com> (https://nichoth.com)",
   "license": "MIT",
-  "dependencies": {
-    "@bicycle-codes/one-webcrypto": "^1.1.2",
-    "tweetnacl": "^1.0.3"
-  }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bicycle-codes/crypto-util.git"
+  },
+  "keywords": [
+    "crypto",
+    "cryptography",
+    "web"
+  ],
+  "types": "./dist/index.d.ts",
+  "bugs": {
+    "url": "https://github.com/bicycle-codes/crypto-util/issues"
+  },
+  "homepage": "https://github.com/bicycle-codes/crypto-util#readme"
 }
