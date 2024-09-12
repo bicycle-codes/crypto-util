@@ -108,7 +108,7 @@ export async function sha256 (bytes:Uint8Array):Promise<Uint8Array> {
 
 export function isCryptoKeyPair (val:unknown):val is CryptoKeyPair {
     return (
-        hasProp(val, 'algorithm') &&
+        hasProp(((val! as CryptoKeyPair).publicKey), 'algorithm') &&
         hasProp(val, 'publicKey')
     )
 }

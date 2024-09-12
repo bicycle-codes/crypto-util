@@ -81,50 +81,6 @@ export async function encrypt (
         arrBufToBase64(encrypted))
 }
 
-// export async function decrypt (
-//     data:Uint8Array|string,
-//     privateKey:CryptoKey|Uint8Array,
-// ):Promise<Uint8Array>
-
-// export async function decrypt (
-//     data:Uint8Array|string,
-//     privateKey:CryptoKey|Uint8Array,
-//     opts?:{ format:'base64' }
-// ):Promise<string>
-
-/**
- * The given `format` arg is for the output format.
- * If input is a string, it is assumed to be `base64pad` encoded.
- *
- * The default output format is 'raw' because normally you encrypt an AES
- * key, and want to use the decrypted key.
- */
-// export async function decrypt (
-//     data:Uint8Array|string,
-//     privateKey:CryptoKey|Uint8Array,
-//     opts:{ format:'base64'|'raw' } = {
-//         format: 'raw',
-//     },
-// ):Promise<Uint8Array|string> {
-//     const key = isCryptoKey(privateKey) ?
-//         privateKey :
-//         await importRsaKey(privateKey, ['decrypt'])
-
-//     const arrayBuffer = await webcrypto.subtle.decrypt(
-//         { name: RSA_ALGORITHM },
-//         key,
-//         (typeof data === 'string' ? fromString(data, 'base64pad') : data)
-//     )
-
-//     const arr = new Uint8Array(arrayBuffer)
-
-//     if (opts.format === 'base64') {
-//         return arrBufToBase64(arr)
-//     }
-
-//     return arr
-// }
-
 /**
  * Decrypt the given Uint8Array
  */
