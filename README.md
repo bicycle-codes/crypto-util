@@ -111,7 +111,7 @@ const eccEncryptedText = await ecc(
     bobsKeys.publicKey
 )
 
-// note keys a reversed here
+// note keys are reversed here
 // alice's public key and bob's private key
 const decrypted = await eccDecrypt(
     eccEncryptedText,
