@@ -64,7 +64,6 @@
   },
   "dependencies": {
     "@bicycle-codes/one-webcrypto": "^1.1.2",
-    "tweetnacl": "^1.0.3",
     "uint8arrays": "^5.1.0"
   },
   "devDependencies": {

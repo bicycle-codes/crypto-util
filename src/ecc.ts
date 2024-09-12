@@ -159,9 +159,9 @@ export async function encrypt (
         iv:ArrayBuffer
     }>
 ):Promise<Uint8Array|string> {
-    const importedPublicKey = typeof publicKey === 'string'
-        ? await importPublicKey(publicKey, curve, KeyUse.Encrypt)
-        : publicKey
+    const importedPublicKey = (typeof publicKey === 'string' ?
+        await importPublicKey(publicKey, curve, KeyUse.Encrypt) :
+        publicKey)
 
     const cipherKey = await getSharedKey(privateKey, importedPublicKey, opts)
     const encrypted = await aes.encryptBytes(
