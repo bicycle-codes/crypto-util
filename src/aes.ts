@@ -4,13 +4,14 @@ import {
     DEFAULT_CTR_LEN,
     DEFAULT_SYMM_LEN,
 } from './constants.js'
-import type {
-    CipherText,
-    SymmKey,
-    Msg,
-    SymmKeyLength,
-    SymmKeyOpts,
-    SymmAlg,
+import {
+    type CipherText,
+    type SymmKey,
+    type Msg,
+    type SymmKeyLength,
+    type SymmKeyOpts,
+    type SymmAlg,
+    CharSize,
 } from './types.js'
 import {
     randomBuf,
@@ -85,10 +86,11 @@ export async function encrypt (
 export async function decrypt (
     msg:Msg,
     key:SymmKey|string,
-    opts?:Partial<SymmKeyOpts>
+    opts?:Partial<SymmKeyOpts>,
+    charSize?:CharSize
 ):Promise<string> {
     const msgBytes = await decryptBytes(msg, key, opts)
-    return arrBufToStr(msgBytes, 16)
+    return arrBufToStr(msgBytes, charSize || CharSize.B8)
 }
 
 export async function exportKey (key:SymmKey):Promise<Uint8Array> {

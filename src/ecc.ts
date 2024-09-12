@@ -144,12 +144,12 @@ export async function encrypt (
 ):Promise<string>
 
 /**
- * Encrypt the given message (or AES key).
+ * Encrypt the given message.
  */
 export async function encrypt (
     msg:Msg,
     privateKey:PrivateKey,
-    publicKey:string | PublicKey,
+    publicKey:string|PublicKey,
     { format }:{ format: 'base64'|'raw' } = { format: 'base64' },
     charSize:CharSize = DEFAULT_CHAR_SIZE,
     curve:EccCurve = DEFAULT_ECC_CURVE,

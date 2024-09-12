@@ -15,10 +15,66 @@ Utility functions for working with cryptography keys.
 
 <!-- toc -->
 
+- [install](#install)
+- [API](#api)
+  * [ESM](#esm)
+  * [Common JS](#common-js)
+- [use](#use)
+  * [JS](#js)
+  * [pre-built JS](#pre-built-js)
+
+<!-- tocstop -->
+
 ## install
 
 ```sh
 npm i -S @bicycle-codes/crypto-util
+```
+
+## example
+
+### Create a new keypair
+
+Use ECC keys with the [web crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API).
+
+```js
+import { create } from '../src/ecc.js'
+
+// create a new keypair
+const encryptKeypair = await create(KeyUse.Encrypt)
+const signKeys = await create(KeyUse.Sign)
+```
+
+### Use your keys to create a new AES key
+
+This requires a keypair + another keypair to derive a shared AES key.
+
+```js
+import { getSharedKey } from '@bicycle-codes/crypto-util/ecc'
+import { KeyUse } from '@bicycle-codes/crypto-util/types'
+
+const bobsKeys = await createEcc(KeyUse.Encrypt)
+// pass in our private key, their public key
+const sharedKey = await getSharedKey(aliceKeys.privateKey, bobsKeys.publicKey)
+```
+
+Bob can derive the same key by using their private key + Alice's public key.
+
+```js
+const bobsSharedKey = await getSharedKey(bobsKey.privateKey, alicesKeys.publicKey)
+```
+
+### Encrypt a message with an AES key
+This will create a new AES key and use it to encrypt the given message.
+
+```js
+import { decrypt } from '@bicycle-codes/crypto-util/ecc'
+
+const alicesMessage = await decrypt(
+    eccEncryptedMsg,
+    alicesKeys.privateKey,
+    bobsKeys.publicKey
+)
 ```
 
 ## API

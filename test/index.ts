@@ -12,6 +12,7 @@ import {
     verify as eccVerify,
     getSharedKey,
     decrypt as eccDecrypt,
+    encrypt as eccEncrypt
 } from '../src/ecc.js'
 import {
     create as createRsa,
@@ -143,7 +144,8 @@ test('alice and bob can decrypt the message', async t => {
         BobsKeys.publicKey
     )
 
-    t.equal(alicesMessage, 'hello ECC', 'Alice can decrypt by calling .decrypt')
+    t.equal(alicesMessage, 'hello ECC',
+        'Alice can decrypt by calling ecc.decrypt')
 
     const bobsMessage = await eccDecrypt(
         eccEncryptedMsg,
@@ -151,5 +153,24 @@ test('alice and bob can decrypt the message', async t => {
         eccKeypair.publicKey
     )
 
-    t.equal(bobsMessage, 'hello ECC', 'Bob can decrypt by calling .decrypt')
+    t.equal(bobsMessage, 'hello ECC', 'Bob can decrypt by calling ecc.decrypt')
+})
+
+test('Can encrypt with ecc.encrypt', async t => {
+    const encrypted = await eccEncrypt(
+        'hello ecc',
+        eccKeypair.privateKey,
+        BobsKeys.publicKey
+    )
+
+    t.equal(typeof encrypted, 'string', 'should return a string')
+    console.log('*encrypted**', encrypted)
+
+    const decrypted = await eccDecrypt(
+        encrypted,
+        eccKeypair.privateKey,
+        BobsKeys.publicKey
+    )
+
+    t.equal(decrypted, 'hello ecc', 'should decrypt to the right text')
 })
