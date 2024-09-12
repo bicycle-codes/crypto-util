@@ -9,7 +9,9 @@
 
 Utility functions for working with cryptography keys.
 
-[See the docs](https://namespace.github.io/package-name/)
+[See the docs](https://bicycle-codes.github.io/crypto-util/)
+
+## Contents
 
 <!-- toc -->
 
