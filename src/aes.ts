@@ -83,17 +83,18 @@ export async function encrypt (
 }
 
 export async function decrypt (
-    msg: Msg,
-    key: SymmKey | string,
-    opts?: Partial<SymmKeyOpts>
-): Promise<string> {
+    msg:Msg,
+    key:SymmKey | string,
+    opts?:Partial<SymmKeyOpts>
+):Promise<string> {
     const msgBytes = await decryptBytes(msg, key, opts)
     return arrBufToStr(msgBytes, 16)
 }
 
-export async function exportKey (key: SymmKey): Promise<string> {
+export async function exportKey (key:SymmKey):Promise<Uint8Array> {
     const raw = await webcrypto.subtle.exportKey('raw', key)
-    return arrBufToBase64(raw)
+    return new Uint8Array(raw)
+    // return arrBufToBase64(raw)
 }
 
 export default {
@@ -104,8 +105,11 @@ export default {
     exportKey
 }
 
-export async function importKey (base64key: string, opts?: Partial<SymmKeyOpts>): Promise<SymmKey> {
-    const buf = base64ToArrBuf(base64key)
+export async function importKey (
+    key:string|Uint8Array,
+    opts?:Partial<SymmKeyOpts>
+):Promise<SymmKey> {
+    const buf = typeof key === 'string' ? base64ToArrBuf(key) : key
 
     return webcrypto.subtle.importKey(
         'raw',

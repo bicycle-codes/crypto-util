@@ -1,19 +1,23 @@
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
+import { fromString } from 'uint8arrays'
 import {
     DEFAULT_CHAR_SIZE,
     DEFAULT_HASH_ALGORITHM,
     RSA_SALT_LENGTH,
     RSA_SIGN_ALGORITHM,
     RSA_ALGORITHM,
-    RSA_HASHING_ALGORITHM
+    RSA_HASHING_ALGORITHM,
+    DEFAULT_RSA_SIZE
 } from './constants'
 import { checkValidKeyUse } from './errors'
+import { importKey as importAesKey } from './aes'
 import {
     base64ToArrBuf,
     normalizeBase64ToBuf,
     normalizeUnicodeToBuf,
     isCryptoKey,
-    publicExponent
+    publicExponent,
+    arrBufToBase64,
 } from './util'
 import { KeyUse } from './types'
 import type { RsaSize, Msg, CharSize, HashAlg } from './types'
@@ -47,24 +51,84 @@ export async function sign (
     )
 }
 
-export async function rsaEncrypt (
+export async function encrypt (
     msg:Msg,
     publicKey:string|CryptoKey,
+    opts?:{ format:'base64' },
+    charSize?:CharSize,
+    hashAlg?:HashAlg
+):Promise<string>
+
+export async function encrypt (
+    msg:Msg,
+    publicKey:string|CryptoKey,
+    opts:{ format:'base64'|'raw' } = { format: 'base64' },
     charSize:CharSize = DEFAULT_CHAR_SIZE,
     hashAlg:HashAlg = DEFAULT_HASH_ALGORITHM
-):Promise<ArrayBuffer> {
+):Promise<string|Uint8Array> {
     const pubKey = typeof publicKey === 'string' ?
         await importPublicKey(publicKey, hashAlg, KeyUse.Encrypt) :
         publicKey
 
-    return webcrypto.subtle.encrypt(
+    const encrypted = await webcrypto.subtle.encrypt(
         { name: RSA_ALGORITHM },
         pubKey,
         normalizeUnicodeToBuf(msg, charSize)
     )
+
+    return (opts.format === 'raw' ?
+        new Uint8Array(encrypted) :
+        arrBufToBase64(encrypted))
 }
 
-export async function rsaDecrypt (
+// export async function decrypt (
+//     data:Uint8Array|string,
+//     privateKey:CryptoKey|Uint8Array,
+// ):Promise<Uint8Array>
+
+// export async function decrypt (
+//     data:Uint8Array|string,
+//     privateKey:CryptoKey|Uint8Array,
+//     opts?:{ format:'base64' }
+// ):Promise<string>
+
+/**
+ * The given `format` arg is for the output format.
+ * If input is a string, it is assumed to be `base64pad` encoded.
+ *
+ * The default output format is 'raw' because normally you encrypt an AES
+ * key, and want to use the decrypted key.
+ */
+// export async function decrypt (
+//     data:Uint8Array|string,
+//     privateKey:CryptoKey|Uint8Array,
+//     opts:{ format:'base64'|'raw' } = {
+//         format: 'raw',
+//     },
+// ):Promise<Uint8Array|string> {
+//     const key = isCryptoKey(privateKey) ?
+//         privateKey :
+//         await importRsaKey(privateKey, ['decrypt'])
+
+//     const arrayBuffer = await webcrypto.subtle.decrypt(
+//         { name: RSA_ALGORITHM },
+//         key,
+//         (typeof data === 'string' ? fromString(data, 'base64pad') : data)
+//     )
+
+//     const arr = new Uint8Array(arrayBuffer)
+
+//     if (opts.format === 'base64') {
+//         return arrBufToBase64(arr)
+//     }
+
+//     return arr
+// }
+
+/**
+ * Decrypt the given Uint8Array
+ */
+export async function decrypt (
     data:Uint8Array,
     privateKey:CryptoKey|Uint8Array
 ):Promise<Uint8Array> {
@@ -81,6 +145,26 @@ export async function rsaDecrypt (
     const arr = new Uint8Array(arrayBuffer)
 
     return arr
+}
+
+/* Decrypt the given encrypted (AES) key. Get your keys from indexedDB, or use
+* the use the passed in key to decrypt the given encrypted AES key.
+*
+* @param {string} encryptedKey The encrypted key as string
+* @param {CryptoKeyPair} keypair The keypair to use to decrypt
+* @returns {Promise<CryptoKey>} The symmetric key
+*/
+export async function decryptKey (
+    encryptedKey:string,
+    keypair:CryptoKeyPair
+):Promise<CryptoKey> {
+    const decrypted = await decrypt(
+        fromString(encryptedKey),
+        keypair.privateKey
+    )
+
+    const key = await importAesKey(decrypted)
+    return key
 }
 
 export async function importPublicKey (
@@ -123,9 +207,9 @@ export function importRsaKey (
 }
 
 export async function create (
-    size:RsaSize,
-    hashAlg:HashAlg,
-    use:KeyUse
+    use:KeyUse,
+    size:RsaSize = DEFAULT_RSA_SIZE,
+    hashAlg:HashAlg = RSA_HASHING_ALGORITHM,
 ):Promise<CryptoKeyPair> {
     if (!(Object.values(KeyUse).includes(use))) {
         throw new Error('invalid key use')

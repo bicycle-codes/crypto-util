@@ -94,6 +94,10 @@ export function arrBufToBase64 (buf:ArrayBuffer):string {
     return uint8arrays.toString(new Uint8Array(buf), 'base64pad')
 }
 
+export function toString (arr:Uint8Array) {
+    return uint8arrays.toString(arr, 'base64pad')
+}
+
 export function base64ToArrBuf (string:string):ArrayBuffer {
     return uint8arrays.fromString(string, 'base64pad').buffer
 }
@@ -133,4 +137,14 @@ export function arrBufToStr (buf:ArrayBuffer, charSize:CharSize):string {
 
 export function publicExponent ():Uint8Array {
     return new Uint8Array([0x01, 0x00, 0x01])
+}
+
+/**
+ * Create a `Uint8Array` from a given `base64pad` encoded string.
+ *
+ * @param str `base64pad` encoded string
+ * @returns {Uint8Array}
+ */
+export function fromString (str:string) {
+    return uint8arrays.fromString(str, 'base64pad')
 }
