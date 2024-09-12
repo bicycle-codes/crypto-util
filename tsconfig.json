@@ -24,7 +24,6 @@
     "declarationMap": true
   },
   "include": [
-    "example",
     "src/**/*",
     "test",
     "lib.es5.d.ts"
