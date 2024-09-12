@@ -1,7 +1,5 @@
 import * as uint8arrays from 'uint8arrays'
-import {
-    BASE58_DID_PREFIX,
-} from './constants'
+import { BASE58_DID_PREFIX } from './constants'
 import type { DID, KeyTypes } from './types'
 
 export * from './util'
