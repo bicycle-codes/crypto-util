@@ -100,7 +100,7 @@ import {
   create,
   encrypt,
   decrypt
-} from '@bicycle-codes/crypto-util/types'
+} from '@bicycle-codes/crypto-util'
 
 const alicesKeys = await create(KeyUse.Encrypt)
 const bobsKeys = await create(KeyUse.Encrypt)
