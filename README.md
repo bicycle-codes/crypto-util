@@ -93,6 +93,8 @@ const decrypted = await decrypt(aesEncryptedText, aesKey)
 ```
 
 ### encrypt with ECC keys
+This is a message from Alice to Bob. We use Alice's private key & Bob's
+public key.
 
 ```js
 import {
@@ -104,15 +106,21 @@ import {
 
 const alicesKeys = await create(KeyUse.Encrypt)
 const bobsKeys = await create(KeyUse.Encrypt)
-const eccEncryptedText = await ecc(
+const eccEncryptedText = await encrypt(
     'hello ecc',
     alicesKeys.privateKey,
     bobsKeys.publicKey
 )
+```
 
-// note keys are reversed here
+### Decrypt with ECC keys
+Bob can decrypt the message encrypted by Alice, because we used bob's public
+key when encrypting it.
+
+```js
+// note keys are reversed here --
 // alice's public key and bob's private key
-const decrypted = await eccDecrypt(
+const decrypted = await decrypt(
     eccEncryptedText,
     bobsKeys.privateKey,
     alicesKeys.publicKey
