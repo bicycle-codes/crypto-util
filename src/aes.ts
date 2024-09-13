@@ -143,4 +143,3 @@ export function create (opts:{ alg, length } = {
         length: opts.length
     }, true, ['encrypt', 'decrypt'])
 }
-

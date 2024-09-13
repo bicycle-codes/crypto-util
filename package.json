@@ -64,6 +64,7 @@
   },
   "dependencies": {
     "@bicycle-codes/one-webcrypto": "^1.1.2",
+    "@noble/ciphers": "^1.0.0",
     "uint8arrays": "^5.1.0"
   },
   "devDependencies": {

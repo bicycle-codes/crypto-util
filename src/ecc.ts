@@ -74,7 +74,8 @@ export async function sign (
 ):Promise<ArrayBuffer>
 
 /**
- * Sign the given message. Return the signature as an `ArrayBuffer`.
+ * Sign the given message. Return the signature as a string by default,
+ * or pass `{ format: 'raw' }` to return an `ArrayBuffer`.
  */
 export async function sign (
     msg:Msg,
@@ -148,7 +149,8 @@ export async function encrypt (
 ):Promise<string>
 
 /**
- * Encrypt the given message.
+ * Encrypt the given message. Returns a string by default. Pass
+ * `{ format: 'raw' }` to return a `Uint8Array`.
  */
 export async function encrypt (
     msg:Msg,
@@ -225,6 +227,9 @@ export async function exportPublicKey (
     return arrBufToBase64(raw)
 }
 
+/**
+ * Create an AES key from the given 2 keyapirs.
+ */
 export async function getSharedKey (
     privateKey:PrivateKey,
     publicKey:PublicKey,
