@@ -27,3 +27,9 @@ export const DEFAULT_SIGNING_KEY_NAME = 'signing-key'
 export const BLS_DID_PREFIX = new Uint8Array([0xea, 0x01])
 export const DEFAULT_CHAR_SIZE = CharSize.B8
 export const DEFAULT_HASH_ALGORITHM = HashAlg.SHA_256
+export const KEY_TYPE = {
+    RSA: 'rsa',
+    Edwards: 'ed25519',
+    BLS: 'bls12-381'
+} as const
+export const DEFAULT_STRING_ENCODING = 'base64pad'

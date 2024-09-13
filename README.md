@@ -47,6 +47,8 @@ npm i -S @bicycle-codes/crypto-util
 
 Use ECC keys with the [web crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API).
 
+Also, you can use [RSA keys](./test/index.ts#L62).
+
 ```js
 import { create } from '@bicycle-codes/crypto-util'
 
@@ -130,9 +132,50 @@ const decrypted = await decrypt(
 // => 'hello ecc'
 ```
 
+### Sign things
+Create another keypair that is used for signatures.
+
+```js
+import { KeyUse } from '@bicycle-codes/crypto-util'
+
+const eccSignKeys = await createEcc(KeyUse.Sign)
+```
+
+#### Create signatures
+
+```js
+import { sign } from '@bicycle-codes/crypto-util/ecc'
+
+const sig = await sign('hello dids', eccSignKeys.privateKey)
+```
+
+#### Create a DID
+A DID is a [decentralized identifier](https://github.com/w3c/did-wg/blob/main/did-explainer.md), a string the encodes a user's public key.
+
+If you are transmiting your public key along with a message, for example, this is the preferred format.
+
+```js
+import { publicKeyToDid } from '@bicycle-codes/crypto-util'
+
+const did = await publicKeyToDid(eccSignKeys.publicKey)
+```
+
+### Verify a signature
+Use a DID to verify a signature string.
+
+```js
+import { verifyWithDid, sign } from '@bicycle-codes/crypto-util/ecc'
+
+const sig = await sign('hello dids', eccSignKeys.privateKey)
+const isOk = await verifyWithDid('hello dids', sig, did)
+```
+
+
 --------------------------------------------------------------
 ## API
 --------------------------------------------------------------
+
+[See the API docs](https://bicycle-codes.github.io/crypto-util/)
 
 This exposes ESM and common JS via [package.json `exports` field](https://nodejs.org/api/packages.html#exports).
 

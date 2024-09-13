@@ -1,5 +1,8 @@
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
+import * as uint8arrays from 'uint8arrays'
+import { magicBytes, parseMagicBytes } from './index.js'
 import {
+    BASE58_DID_PREFIX,
     DEFAULT_CHAR_SIZE,
     DEFAULT_HASH_ALGORITHM,
     ECC_SIGN_ALGORITHM,
@@ -17,7 +20,8 @@ import type {
     PublicKey,
     SymmKeyLength,
     SymmKey,
-    SymmAlg
+    SymmAlg,
+    DID
 } from './types'
 import {
     KeyUse,
@@ -149,7 +153,7 @@ export async function encrypt (
 export async function encrypt (
     msg:Msg,
     privateKey:PrivateKey,
-    publicKey:string|PublicKey,
+    publicKey:string|PublicKey,  // <-- base64 or key
     { format }:{ format: 'base64'|'raw' } = { format: 'base64' },
     charSize:CharSize = DEFAULT_CHAR_SIZE,
     curve:EccCurve = DEFAULT_ECC_CURVE,
@@ -197,8 +201,27 @@ export async function decrypt (
     return aes.decrypt(msg, cipherKey, opts)
 }
 
-async function getPublicKey (keypair:CryptoKeyPair):Promise<string> {
-    const raw = await webcrypto.subtle.exportKey('raw', keypair.publicKey)
+export async function exportPublicKey (
+    key:PublicKey,
+):Promise<Uint8Array>
+
+export async function exportPublicKey (
+    publicKey:PublicKey,
+    opts:{ format:'string' }
+):Promise<string>
+
+/**
+ * Get the public key as a Uint8Array by default, or a base64 string.
+ */
+export async function exportPublicKey (
+    key:PublicKey,
+    opts:{ format:'string'|'raw' } = { format: 'raw' }
+):Promise<string|Uint8Array> {
+    const raw = await webcrypto.subtle.exportKey('raw', key)
+    if (opts.format === 'raw') {
+        return new Uint8Array(raw)
+    }
+
     return arrBufToBase64(raw)
 }
 
@@ -227,22 +250,25 @@ export default {
     sign,
     verify,
     encrypt,
-    getPublicKey,
-    getSharedKey
+    exportPublicKey,
+    getSharedKey,
+    importPublicKey
 }
 
-export async function importPublicKey (
-    base64Key:string,
-    curve:EccCurve,
-    use:KeyUse
+export function importPublicKey (
+    base64Key:string|Uint8Array,
+    curve:EccCurve = DEFAULT_ECC_CURVE,
+    use:KeyUse = KeyUse.Sign
 ):Promise<PublicKey> {
     checkValidKeyUse(use)
     const alg = use === KeyUse.Encrypt ?
         ECC_ENCRYPT_ALGORITHM :
         ECC_SIGN_ALGORITHM
-    const uses: KeyUsage[] =
-      use === KeyUse.Encrypt ? [] : ['verify']
-    const buf = base64ToArrBuf(base64Key)
+    const uses:KeyUsage[] = (use === KeyUse.Encrypt ? [] : ['verify'])
+    const buf = (typeof base64Key === 'string' ?
+        base64ToArrBuf(base64Key) :
+        base64Key)
+
     return webcrypto.subtle.importKey(
         'raw',
         buf,
@@ -250,4 +276,67 @@ export async function importPublicKey (
         true,
         uses
     )
+}
+
+/**
+ * Convert a DID format string to a public key instance.
+ */
+export async function importDid (did:DID):Promise<PublicKey> {
+    const parsed = didToPublicKey(did)
+    const pubKey = await importPublicKey(parsed.publicKey)
+    return pubKey
+}
+
+/**
+ * Convert a public key to a DID format string.
+ */
+export async function publicKeyToDid (
+    publicKey:Uint8Array|PublicKey
+):Promise<DID> {
+    if (publicKey instanceof CryptoKey) {
+        publicKey = await exportPublicKey(publicKey)
+    }
+
+    const prefix = magicBytes.ed25519
+    const prefixedBuf = uint8arrays.concat([prefix, publicKey])
+
+    return (BASE58_DID_PREFIX +
+        uint8arrays.toString(prefixedBuf, 'base58btc')) as DID
+}
+
+/**
+ * Convert the given DID string to a public key Uint8Array.
+ */
+export function didToPublicKey (did:string):({
+    publicKey:Uint8Array,
+    type:'ed25519'
+}) {
+    if (!did.startsWith(BASE58_DID_PREFIX)) {
+        throw new Error(
+            'Please use a base58-encoded DID formatted `did:key:z...`')
+    }
+
+    const didWithoutPrefix = ('' + did.substring(BASE58_DID_PREFIX.length))
+    const magicalBuf = uint8arrays.fromString(didWithoutPrefix, 'base58btc')
+    const { keyBuffer } = parseMagicBytes(magicalBuf.buffer)
+
+    return {
+        publicKey: new Uint8Array(keyBuffer),
+        type: 'ed25519'
+    }
+}
+
+export async function verifyWithDid (
+    msg:string,
+    sig:string,
+    did:DID
+):Promise<boolean> {
+    try {
+        const key = didToPublicKey(did).publicKey
+        const imported = await importPublicKey(key)
+        const isOk = await verify(msg, sig, imported)
+        return isOk
+    } catch (_err) {
+        return false
+    }
 }

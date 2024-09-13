@@ -1,13 +1,17 @@
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
-import { fromString } from 'uint8arrays'
+import { fromString, toString } from 'uint8arrays'
+import * as uint8arrays from 'uint8arrays'
+import { magicBytes, parseMagicBytes } from './index.js'
 import {
+    BASE58_DID_PREFIX,
     DEFAULT_CHAR_SIZE,
     DEFAULT_HASH_ALGORITHM,
     RSA_SALT_LENGTH,
     RSA_SIGN_ALGORITHM,
     RSA_ALGORITHM,
     RSA_HASHING_ALGORITHM,
-    DEFAULT_RSA_SIZE
+    DEFAULT_RSA_SIZE,
+    DEFAULT_STRING_ENCODING
 } from './constants'
 import { checkValidKeyUse } from './errors'
 import { importKey as importAesKey } from './aes'
@@ -20,7 +24,7 @@ import {
     arrBufToBase64,
 } from './util'
 import { KeyUse } from './types'
-import type { RsaSize, Msg, CharSize, HashAlg } from './types'
+import type { RsaSize, Msg, CharSize, HashAlg, DID, PublicKey } from './types'
 
 export async function verify (
     msg:Msg,
@@ -90,7 +94,7 @@ export async function decrypt (
 ):Promise<Uint8Array> {
     const key = isCryptoKey(privateKey) ?
         privateKey :
-        await importRsaKey(privateKey, ['decrypt'])
+        await importPublicKey(privateKey, undefined, KeyUse.Encrypt)
 
     const arrayBuffer = await webcrypto.subtle.decrypt(
         { name: RSA_ALGORITHM },
@@ -123,16 +127,19 @@ export async function decryptKey (
     return key
 }
 
+/**
+ * Return a CryptoKey from the given Uint8Array or string.
+ */
 export async function importPublicKey (
-    base64Key:string|ArrayBuffer,
-    hashAlg:HashAlg,
-    use:KeyUse
+    base64Key:string|Uint8Array,
+    hashAlg:HashAlg = DEFAULT_HASH_ALGORITHM,
+    use:KeyUse = KeyUse.Encrypt
 ):Promise<CryptoKey> {
     checkValidKeyUse(use)
     const alg = (use === KeyUse.Encrypt ? RSA_ALGORITHM : RSA_SIGN_ALGORITHM)
-    const uses:KeyUsage[] = use === KeyUse.Encrypt ?
+    const uses:KeyUsage[] = (use === KeyUse.Encrypt ?
         ['encrypt'] :
-        ['verify']
+        ['verify'])
     const buf = typeof base64Key === 'string' ?
         base64ToArrBuf(stripKeyHeader(base64Key)) :
         base64Key
@@ -143,17 +150,40 @@ export async function importPublicKey (
     }, true, uses)
 }
 
-export function importRsaKey (
-    key:Uint8Array,
-    keyUsages:KeyUsage[]
-):Promise<CryptoKey> {
-    return webcrypto.subtle.importKey(
+// export async function exportKey (
+//     keys:CryptoKeyPair,
+//     { format }?:{ format:'raw' }
+// ):Promise<string>
+
+export async function exportKey (
+    key:PublicKey
+):Promise<Uint8Array>
+
+export async function exportKey (
+    key:PublicKey,
+    opts:{ format:'string' }
+):Promise<string>
+
+/**
+ * Get a public key from the given keypair.
+ *
+ * @param keys The keypair to extract the public key from
+ * @returns The public key
+ */
+export async function exportKey (
+    key:PublicKey,
+    { format }:{ format:'string'|'raw' } = { format: 'raw' }
+):Promise<Uint8Array|string> {
+    const arr = new Uint8Array(await webcrypto.subtle.exportKey(
         'spki',
-        key,
-        { name: RSA_ALGORITHM, hash: RSA_HASHING_ALGORITHM },
-        false,
-        keyUsages
-    )
+        key
+    ))
+
+    if (format === 'string') {
+        return toString(arr, DEFAULT_STRING_ENCODING)
+    }
+
+    return arr
 }
 
 export async function create (
@@ -177,28 +207,74 @@ export async function create (
     }, false, uses)
 }
 
-export async function importRsaPublicKey (
-    base64Key:string|ArrayBuffer,
-    hashAlg:HashAlg,
-    use:KeyUse
-):Promise<CryptoKey> {
-    checkValidKeyUse(use)
-    const alg = (use === KeyUse.Encrypt ? RSA_ALGORITHM : RSA_SIGN_ALGORITHM)
-    const uses:KeyUsage[] = use === KeyUse.Encrypt ?
-        ['encrypt'] :
-        ['verify']
-    const buf = typeof base64Key === 'string' ?
-        base64ToArrBuf(stripKeyHeader(base64Key)) :
-        base64Key
-
-    return webcrypto.subtle.importKey('spki', buf, {
-        name: alg,
-        hash: { name: hashAlg }
-    }, true, uses)
-}
-
 function stripKeyHeader (base64Key:string):string {
     return base64Key
         .replace('-----BEGIN PUBLIC KEY-----\n', '')
         .replace('\n-----END PUBLIC KEY-----', '')
+}
+
+export async function verifyWithDid (
+    msg:string,
+    sig:string,
+    did:DID
+):Promise<boolean> {
+    const key = await importDid(did)
+    try {
+        const isOk = await verify(msg, sig, key)
+        return isOk
+    } catch (_err) {
+        return false
+    }
+}
+
+/**
+ * Convert a public key to a DID format string.
+ */
+export async function publicKeyToDid (
+    publicKey:Uint8Array|PublicKey,
+):Promise<DID> {
+    if (publicKey instanceof CryptoKey) {
+        publicKey = await exportKey(publicKey)
+    }
+
+    const prefix = magicBytes.rsa
+    const prefixedBuf = uint8arrays.concat([prefix, publicKey])
+
+    return (BASE58_DID_PREFIX +
+        uint8arrays.toString(prefixedBuf, 'base58btc')) as DID
+}
+
+/**
+ * Convert the given DID string to a public key Uint8Array.
+ */
+export function didToPublicKey (did:DID):({
+    publicKey:Uint8Array,
+    type:'rsa'
+}) {
+    if (!did.startsWith(BASE58_DID_PREFIX)) {
+        throw new Error(
+            'Please use a base58-encoded DID formatted `did:key:z...`')
+    }
+
+    const didWithoutPrefix = ('' + did.substring(BASE58_DID_PREFIX.length))
+    const magicalBuf = uint8arrays.fromString(didWithoutPrefix, 'base58btc')
+    const { keyBuffer } = parseMagicBytes(magicalBuf)
+
+    return {
+        publicKey: new Uint8Array(keyBuffer),
+        type: 'rsa'
+    }
+}
+
+/**
+ * Convert the given DID string to a public key.
+ */
+export async function importDid (
+    did:DID,
+    hashAlgorithm:HashAlg = DEFAULT_HASH_ALGORITHM,
+    use:KeyUse = KeyUse.Sign
+):Promise<PublicKey> {
+    const parsed = didToPublicKey(did)
+    const key = await importPublicKey(parsed.publicKey, hashAlgorithm, use)
+    return key
 }

@@ -12,21 +12,35 @@ import {
     verify as eccVerify,
     getSharedKey,
     decrypt as eccDecrypt,
-    encrypt as eccEncrypt
+    encrypt as eccEncrypt,
+    exportPublicKey as eccExportKey,
+    publicKeyToDid as eccPublicToDid,
+    didToPublicKey as eccDidToPublicKey,
+    importDid,
+    verifyWithDid as eccVerifyWithDid
 } from '../src/ecc.js'
 import {
     create as createRsa,
     sign as rsaSign,
+    verify as rsaVerify,
     encrypt as rsaEncrypt,
     decrypt as rsaDecrypt,
+    exportKey as exportRsaKey,
+    publicKeyToDid as rsaPublicKeyToDid,
+    didToPublicKey as rsaDidToPublicKey,
+    importDid as rsaImportDid,
+    verifyWithDid as rsaVerifyWithDid
 } from '../src/rsa.js'
-// import { create } from '../src/ecc.js'
-import { arrBufToBase64, isCryptoKeyPair } from '../src/index.js'
-import { KeyUse } from '../src/types.js'
+import {
+    arrBufToBase64,
+    isCryptoKeyPair,
+    didToPublicKey
+} from '../src/index.js'
+import { KeyUse, type DID } from '../src/types.js'
 
-//
+// ---------------------------------------------------
 // AES
-//
+// ---------------------------------------------------
 let aesKey:CryptoKey
 test('Create an AES key', async t => {
     aesKey = await createAes()
@@ -44,9 +58,9 @@ test('decrypt the text with AES', async t => {
     t.equal(decrypted, 'hello AES', 'should decrypt to the right text')
 })
 
-//
+// ---------------------------------------------------
 // RSA
-//
+// ---------------------------------------------------
 let rsaKeypair:CryptoKeyPair
 test('Create an RSA keypair', async t => {
     const keys = rsaKeypair = await createRsa(KeyUse.Sign)
@@ -54,7 +68,41 @@ test('Create an RSA keypair', async t => {
     t.ok(keys.publicKey instanceof CryptoKey, 'should create a new keypair')
 })
 
-// sign things
+let rsaDid:DID
+test('RSA public key to DID', async t => {
+    const arr = await exportRsaKey(rsaKeypair.publicKey)
+    const did = rsaDid = await rsaPublicKeyToDid(arr)
+    t.equal(did.length, 415, 'RSA did should be 415 characters')
+    t.equal(typeof did, 'string', 'should return a string')
+    t.ok(did.startsWith('did:key:z'), 'should return the right format DID')
+})
+
+test('RSA did to public key', t => {
+    const key = rsaDidToPublicKey(rsaDid)
+    t.ok(key.publicKey instanceof Uint8Array, 'should return a Uint8Array')
+    t.equal(key.type, 'rsa', 'should return the key type')
+})
+
+test('Use the public key from the DID to verify a signature', async t => {
+    const key = await rsaImportDid(rsaDid)
+    const sig = await rsaSign('hello dids', rsaKeypair.privateKey)
+    const isOk = await rsaVerify('hello dids', sig, key)
+    t.ok(isOk, 'should verify a valid signature')
+})
+
+test('rsa.verifyWithDid', async t => {
+    const sig = await rsaSign('hello dids', rsaKeypair.privateKey)
+    const sigString = arrBufToBase64(sig)
+    const isOk = await rsaVerifyWithDid('hello dids', sigString, rsaDid)
+    t.ok(isOk, 'should verify a valid string with the DID')
+})
+
+test('Export the public key as a string', async t => {
+    const str = await exportRsaKey(rsaKeypair.publicKey, { format: 'string' })
+    t.equal(typeof str, 'string', 'should retunr a base64 string')
+})
+
+// RSA sign things
 test('sign things with RSA', async t => {
     const sig = await rsaSign('hello RSA', rsaKeypair.privateKey)
     const sigString = arrBufToBase64(sig)
@@ -63,7 +111,7 @@ test('sign things with RSA', async t => {
     t.equal(typeof sigString, 'string', 'should convert to a string')
 })
 
-// encrypt things
+// RSA encrypt things
 let encryptedKey:string
 let aesString:string
 let encKeys:CryptoKeyPair
@@ -95,15 +143,58 @@ test('RSA decrypt a Uint8Array AES key', async t => {
     t.equal(decryptedAsString, aesString, 'should decrypt to the right value')
 })
 
-//
+// ---------------------------------------------------
 // ECC
-//
+// ---------------------------------------------------
 let eccKeypair:CryptoKeyPair
 let eccSignKeys:CryptoKeyPair
 test('create an ECC keypair', async t => {
     eccKeypair = await createEcc(KeyUse.Encrypt)
     eccSignKeys = await createEcc(KeyUse.Sign)
     t.ok(isCryptoKeyPair(eccKeypair), 'should return a new keypair')
+})
+
+test('export the public key', async t => {
+    const publicKey = await eccExportKey(eccKeypair.publicKey)
+    t.ok(publicKey instanceof Uint8Array,
+        'should retunr a Uint8Array by default')
+    const keyStirng = await eccExportKey(eccKeypair.publicKey, {
+        format: 'string'
+    })
+    t.equal(typeof keyStirng, 'string', 'should return a string given opts')
+})
+
+let eccDid:DID
+test('ECC public key to DID', async t => {
+    const arr = await eccExportKey(eccSignKeys.publicKey)
+    const did = eccDid = await eccPublicToDid(arr)
+    t.equal(did.length, 101, 'ECC did should be 101 characters long')
+    t.equal(typeof did, 'string', 'should return a string')
+    t.ok(did.startsWith('did:key:z'), 'should return the right format DID')
+})
+
+test('ECC public key to DID, pass a CryptoKey instance', async t => {
+    const did = await eccPublicToDid(eccSignKeys.publicKey)
+    t.ok(did.startsWith('did:key:z'), 'should return the right format DID')
+})
+
+test('ECC DID to public key', t => {
+    const key = eccDidToPublicKey(eccDid)
+    t.ok(key.publicKey instanceof Uint8Array, 'returns the public key as Uint8Array')
+    t.equal(key.type, 'ed25519', 'should return the key type')
+})
+
+test('Use the public key from the DID to verify something', async t => {
+    const sig = await eccSign('hello dids', eccSignKeys.privateKey)
+    const key = await importDid(eccDid)
+    const isOk = await eccVerify('hello dids', sig, key)
+    t.ok(isOk, 'should verify a valid signature')
+})
+
+test('ecc.verifyWithDid', async t => {
+    const sig = await eccSign('hello dids', eccSignKeys.privateKey)
+    const isOk = await eccVerifyWithDid('hello dids', sig, eccDid)
+    t.ok(isOk, 'should verify a valid signature')
 })
 
 // sign
@@ -183,4 +274,18 @@ test('Can decrypt with ecc.decrypt', async t => {
     )
 
     t.equal(bobsDecrypted, 'hello ecc', 'bob can decrypt it too')
+})
+
+// ---------------------------------------------------
+// Misc
+// ---------------------------------------------------
+
+test('Generic DID to public key', t => {
+    const key = didToPublicKey(eccDid)
+
+    t.equal(key.type, 'ed25519',
+        'should return the correct key type -- ed25519')
+
+    t.equal(didToPublicKey(rsaDid).type, 'rsa',
+        'should return the correct key type -- rsa')
 })

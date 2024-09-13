@@ -20,6 +20,18 @@ export const normalizeToBuf = (
     }
 }
 
+/**
+ * Export the public key from the given keypair as a Uint8Array.
+ * @param {CryptoKeyPair} keys The keypair to export.
+ * @returns {Promise<Uint8Array>} The public key as Uint8Array.
+ */
+export async function exportKey (keys:CryptoKeyPair):Promise<Uint8Array> {
+    return new Uint8Array(await webcrypto.subtle.exportKey(
+        'spki',
+        keys.publicKey
+    ))
+}
+
 export function normalizeBase64ToBuf (msg:Msg):ArrayBuffer {
     return normalizeToBuf(msg, base64ToArrBuf)
 }
