@@ -35,9 +35,9 @@ export async function encryptBytes (
     }>,
     charSize:CharSize = DEFAULT_CHAR_SIZE
 ):Promise<CipherText> {
-    const data = charSize === CharSize.B8 ?
+    const data = (charSize === CharSize.B8 ?
         normalizeUtf8ToBuf(msg) :
-        normalizeUtf16ToBuf(msg)
+        normalizeUtf16ToBuf(msg))
 
     const importedKey = typeof key === 'string' ? await importKey(key, opts) : key
     const alg = opts?.alg || DEFAULT_SYMM_ALGORITHM

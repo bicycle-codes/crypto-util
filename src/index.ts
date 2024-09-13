@@ -1,26 +1,16 @@
 import * as uint8arrays from 'uint8arrays'
 import { BASE58_DID_PREFIX } from './constants'
-import type { DID, KeyTypes } from './types'
+import type { DID, KeyAlgorithm } from './types'
 
 export * from './util'
 export * from './types'
 export * from './constants'
 export * from './errors'
 
-export const did:{ keyTypes:KeyTypes } = {
-    keyTypes: {
-        'bls12-381': {
-            magicBytes: new Uint8Array([0xea, 0x01]),
-        },
-
-        ed25519: {
-            magicBytes: new Uint8Array([0xed, 0x01]),
-        },
-
-        rsa: {
-            magicBytes: new Uint8Array([0x00, 0xf5, 0x02]),
-        }
-    }
+export const magicBytes:Record<KeyAlgorithm, Uint8Array> = {
+    'bls12-381': new Uint8Array([0xea, 0x01]),
+    ed25519: new Uint8Array([0xed, 0x01]),
+    rsa: new Uint8Array([0x00, 0xf5, 0x02]),
 }
 
 /**
@@ -34,10 +24,10 @@ export function publicKeyToDid (
     publicKey:Uint8Array,
     keyType:'rsa'|'ed25519' = 'rsa'
 ):DID {
-    const prefix = did.keyTypes[keyType]?.magicBytes
+    const prefix = magicBytes[keyType]
     if (!prefix) {
         throw new Error(`Key type '${keyType}' not supported, ` +
-            `available types: ${Object.keys(did.keyTypes).join(', ')}`)
+            `available types: ${Object.keys(magicBytes).join(', ')}`)
     }
 
     const prefixedBuf = uint8arrays.concat([prefix, publicKey])
