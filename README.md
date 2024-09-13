@@ -21,6 +21,7 @@ Utility functions for working with crypto keys in the browser or node.
   * [Encrypt a message with an AES key](#encrypt-a-message-with-an-aes-key)
   * [Decrypt with AES keys](#decrypt-with-aes-keys)
   * [encrypt with ECC keys](#encrypt-with-ecc-keys)
+  * [Decrypt with ECC keys](#decrypt-with-ecc-keys)
 - [API](#api)
   * [ESM](#esm)
   * [Common JS](#common-js)
