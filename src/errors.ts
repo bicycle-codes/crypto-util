@@ -7,7 +7,7 @@ export function checkValidKeyUse (use:KeyUse):void {
     checkValid(use, [KeyUse.Sign, KeyUse.Encrypt], InvalidKeyUse)
 }
 
-function checkValid<T> (toCheck: T, opts: T[], error: Error): void {
+function checkValid<T> (toCheck:T, opts:T[], error:Error): void {
     const match = opts.some(opt => opt === toCheck)
     if (!match) {
         throw error

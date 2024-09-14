@@ -2,6 +2,7 @@ import { gcm } from '@noble/ciphers/aes'
 import { type Cipher } from '@noble/ciphers/utils'
 import { randomBytes } from '@noble/ciphers/webcrypto'
 import { fromString, toString } from '../util'
+import * as u from 'uint8arrays'
 
 /**
  * Create a new AES key with `@noble` modules.
@@ -29,8 +30,28 @@ export function importKey (
     return gcm(buf, nonceBuf)
 }
 
-export function encrypt () {
+export function encrypt (
+    data:string|Uint8Array,
+    key:Cipher,
+    opts?:{ format:'string' }
+):string
 
+export function encrypt (
+    data:string|Uint8Array,
+    key:Cipher,
+    opts:{ format:'raw' }
+):Uint8Array
+
+export function encrypt (
+    data:string|Uint8Array,
+    key:Cipher,
+    opts:{ format:'string'|'raw' } = { format: 'string' }
+):Uint8Array|string {
+    const encrypted = key.encrypt(
+        typeof data === 'string' ? u.fromString(data) : data
+    )
+
+    return opts.format === 'string' ? toString(encrypted) : encrypted
 }
 
 export function decrypt (
@@ -49,7 +70,7 @@ export function decrypt (data:string|Uint8Array, key:Cipher, {
     format
 }:{ format:'string'|'raw' } = { format: 'string' }) {
     if (format === 'string') {
-        return toString(key.decrypt(fromString(data)))
+        return u.toString(key.decrypt(fromString(data)))
     }
 
     return key.decrypt(fromString(data))
