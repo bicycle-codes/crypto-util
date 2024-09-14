@@ -7,10 +7,14 @@ import {
 import {
     create as createEcc,
     sign as eccSign,
+    verify as eccVerify,
     type Keypair,
     exportPublicKey,
-    publicKeyToDid
+    publicKeyToDid,
+    didToPublicKey,
+    encrypt as eccEncrypt
 } from '../src/noble/ecc'
+import type { DID } from '../src/types'
 import type { Cipher } from '../src/noble'
 
 // ---------------------------------------------------
@@ -39,31 +43,58 @@ test('decrypt the text with AES', async t => {
 // ---------------------------------------------------
 // ECC
 // ---------------------------------------------------
-let encKeys:Keypair
-let signKeys:Keypair
+let aliceEncKeys:Keypair
+let aliceSignKeys:Keypair
 test('create an ECC keypair', async t => {
-    encKeys = await createEcc()
-    signKeys = await createEcc()
-    t.ok(encKeys.privateKey, 'should return a new keypair')
-    t.ok(signKeys.privateKey, 'should return a new keypair')
+    aliceEncKeys = await createEcc()
+    aliceSignKeys = await createEcc()
+    t.ok(aliceEncKeys.privateKey, 'should return a new keypair')
+    t.ok(aliceSignKeys.privateKey, 'should return a new keypair')
 })
 
-test('use the keys to sign something', t => {
-    const sig = eccSign('hello ecc', signKeys.privateKey)
+let sig:string
+test('use the keys to sign something', async t => {
+    sig = await eccSign('hello ecc', aliceSignKeys.privateKey)
     t.equal(typeof sig, 'string', 'should return a string by default')
+
+    const sigArray = await eccSign('hello ecc', aliceSignKeys.privateKey, {
+        format: 'raw'
+    })
+
+    t.ok(sigArray instanceof Uint8Array, 'can return a Uint8Array')
 })
 
 test('export public key', t => {
-    const asString = exportPublicKey(signKeys)
+    const asString = exportPublicKey(aliceSignKeys)
     t.equal(typeof asString, 'string', 'should return a string')
 })
 
+let did:DID
 test('transform the public key into a DID string', t => {
-    const did = publicKeyToDid(signKeys)
+    did = publicKeyToDid(aliceSignKeys)
+    t.equal(did.length, 56, 'should be 56 characters long')
     t.equal(typeof did, 'string', 'should return a string')
     t.ok(did.startsWith('did:key:z'), 'should be DID format')
 })
 
-// test('verify the signature', async t => {
+test('transform the DID string to a public key', t => {
+    const publicKey = didToPublicKey(did)
+    t.equal(publicKey.type, 'ed25519', 'should return the right `type`')
+})
 
-// })
+test('verify the signature with a Uint8Array public key', async t => {
+    const isOk = await eccVerify('hello ecc', sig, aliceSignKeys.publicKey)
+    t.ok(isOk, 'should verify a valid signature')
+})
+
+test('verify the signature with a DID format public key', async t => {
+    const isOk = await eccVerify('hello ecc', sig, did)
+    t.ok(isOk, 'should verify a valid signature')
+})
+
+let bobEncKeys:Keypair
+test('ecnrypt something with ECC', async t => {
+    bobEncKeys = await createEcc()
+
+    const encrypted = await 
+})

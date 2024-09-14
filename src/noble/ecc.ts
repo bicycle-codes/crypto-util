@@ -1,10 +1,16 @@
-import * as ed from '@noble/ed25519'
-import { verifyAsync } from '@noble/ed25519'
+import {
+    getPublicKeyAsync,
+    verifyAsync,
+    signAsync,
+    utils,
+} from '@noble/ed25519'
+import { hkdf } from '@noble/hashes/hkdf'
+import { x25519 } from '@noble/curves/ed25519'
 import * as u from 'uint8arrays'
 import { BASE58_DID_PREFIX } from '../constants.js'
-import { toString } from '../util'
+import { toString, fromString } from '../util'
 import { magicBytes, parseMagicBytes } from '../index.js'
-import type { DID } from '../types'
+import type { DID, Msg } from '../types'
 
 export type Keypair = {
     publicKey:Uint8Array;
@@ -15,10 +21,23 @@ export type Keypair = {
  * Create a new keypair.
  */
 export async function create ():Promise<Keypair> {
-    const privKey = ed.utils.randomPrivateKey()  // Secure random key
-    const pubKey = await ed.getPublicKeyAsync(privKey)  // Sync methods below
+    const privKey = utils.randomPrivateKey()  // Secure random key
+    const pubKey = await getPublicKeyAsync(privKey)  // Sync methods below
 
     return { publicKey: pubKey, privateKey: privKey }
+}
+
+/**
+ * Get a shared secret key.
+ *
+ * Async so that it matches the webcrypto API.
+ */
+export async function getSharedKey (
+    privateKey:Uint8Array,
+    publicKey:Uint8Array
+):Promise<Uint8Array> {
+    const key = x25519.getSharedSecret(privateKey, publicKey)
+    return key
 }
 
 /**
@@ -31,8 +50,19 @@ export function exportPublicKey (keys:Keypair):string {
 export async function sign (
     msg:string|Uint8Array,
     privKey:Uint8Array,
-    { format }?:{ format:'raw' },
+    { format }:{ format:'raw' },
 ):Promise<Uint8Array>
+
+export async function sign (
+    msg:string|Uint8Array,
+    privKey:Uint8Array,
+    { format }:{ format:'string' },
+):Promise<string>
+
+export async function sign (
+    msg:string|Uint8Array,
+    privKey:Uint8Array,
+):Promise<string>
 
 /**
  * Sign the given message. Return the signature as a string by default,
@@ -47,7 +77,7 @@ export async function sign (
         u.fromString(msg) :
         msg
 
-    const sig = await ed.signAsync(msgData, privKey)
+    const sig = await signAsync(msgData, privKey)
 
     if (format === 'string') {
         return toString(sig)
@@ -65,13 +95,17 @@ export async function verify (
     sig:string|Uint8Array,
     publicKey:Uint8Array|DID,
 ):Promise<boolean> {
-    const pubBuf = typeof publicKey === 'string' ?
-        didToPublicKey(publicKey).publicKey :
-        publicKey
+    const pubBuf = (typeof publicKey === 'string' ?
+        (didToPublicKey(publicKey)).publicKey :
+        publicKey)
+
+    const sigBuf = typeof sig === 'string' ? fromString(sig) : sig
+    const msgBuf = typeof msg === 'string' ? u.fromString(msg) : msg
 
     try {
-        return (await verifyAsync(sig, msg, pubBuf))
+        return (await verifyAsync(sigBuf, msgBuf, pubBuf))
     } catch (_err) {
+        console.log('errrrrrr', _err)
         return false
     }
 }
@@ -104,39 +138,51 @@ export function publicKeyToDid (
     const pubKey = keys.publicKey
     const prefix = magicBytes.ed25519
     const prefixedBuf = u.concat([prefix, pubKey])
-    return (BASE58_DID_PREFIX +
-        u.toString(prefixedBuf, 'base58btc')) as DID
+    return (
+        BASE58_DID_PREFIX +
+        u.toString(prefixedBuf, 'base58btc')
+    ) as DID
 }
 
-/**
- * Encrypt the given message. Returns a string by default. Pass
- * `{ format: 'raw' }` to return a `Uint8Array`.
- */
 export async function encrypt (
     msg:Msg,
-    privateKey:PrivateKey,
-    publicKey:string|PublicKey,  // <-- base64 or key
-    { format }:{ format: 'base64'|'raw' } = { format: 'base64' },
-    charSize:CharSize = DEFAULT_CHAR_SIZE,
-    curve:EccCurve = DEFAULT_ECC_CURVE,
-    opts?:Partial<{
-        alg:SymmAlg
-        length:SymmKeyLength
-        iv:ArrayBuffer
-    }>
+    privKey:Uint8Array,
+    pubKey:Uint8Array|string,
+    opts:{ format:'raw'|'string' } = { format: 'string' }
 ):Promise<Uint8Array|string> {
-    const importedPublicKey = (typeof publicKey === 'string' ?
-        await importPublicKey(publicKey, curve, KeyUse.Encrypt) :
-        publicKey)
-
-    const cipherKey = await getSharedKey(privateKey, importedPublicKey, opts)
-    const encrypted = await aes.encryptBytes(
-        normalizeUnicodeToBuf(msg, charSize),
-        cipherKey,
-        opts
-    )
-
-    return (format === 'raw' ?
-        new Uint8Array(encrypted) :
-        arrBufToBase64(encrypted))
+    const pubKeyBuf = typeof pubKey === 'string' ? fromString(pubKey) : pubKey
+    const sharedSecret = await getSharedKey(privKey, pubKeyBuf)
 }
+
+// /**
+//  * Encrypt the given message. Returns a string by default. Pass
+//  * `{ format: 'raw' }` to return a `Uint8Array`.
+//  */
+// export async function encrypt (
+//     msg:Msg,
+//     privateKey:PrivateKey,
+//     publicKey:string|PublicKey,  // <-- base64 or key
+//     { format }:{ format: 'base64'|'raw' } = { format: 'base64' },
+//     charSize:CharSize = DEFAULT_CHAR_SIZE,
+//     curve:EccCurve = DEFAULT_ECC_CURVE,
+//     opts?:Partial<{
+//         alg:SymmAlg
+//         length:SymmKeyLength
+//         iv:ArrayBuffer
+//     }>
+// ):Promise<Uint8Array|string> {
+//     const importedPublicKey = (typeof publicKey === 'string' ?
+//         await importPublicKey(publicKey, curve, KeyUse.Encrypt) :
+//         publicKey)
+
+//     const cipherKey = await getSharedKey(privateKey, importedPublicKey, opts)
+//     const encrypted = await aes.encryptBytes(
+//         normalizeUnicodeToBuf(msg, charSize),
+//         cipherKey,
+//         opts
+//     )
+
+//     return (format === 'raw' ?
+//         new Uint8Array(encrypted) :
+//         arrBufToBase64(encrypted))
+// }
