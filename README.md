@@ -56,6 +56,7 @@ This is some helpful functions that make it easier to work with cryptography. No
   * [`ecc.verifyWithDid`](#eccverifywithdid)
   * [`ecc.encrypt`](#eccencrypt)
   * [`ecc.decrypt`](#eccdecrypt)
+- [see also](#see-also)
 
 <!-- tocstop -->
 
