@@ -198,6 +198,13 @@ require('@bicycle-codes/key-utils/module')
 import '@bicycle-codes/crypto-util'
 ```
 
+### web crypto vs sodium
+To use the [webcrypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API), import from the `webcrypto` sub-path.
+
+```js
+import { aes, ecc, rsa } from '@bicycle-codes/crypto-util/webcrypto'
+```
+
 ### pre-built JS
 This package exposes minified, pre-bundled JS files too. Copy them to a location
 that is accessible to your web server, then link in HTML.

@@ -1,5 +1,5 @@
 import { test } from '@bicycle-codes/tapzero'
-import { fromString } from '../src'
+import { didToPublicKey, fromString } from '../src'
 import {
     create,
     sign,
@@ -10,9 +10,10 @@ import {
     importPublicKey,
     publicKeyToDid
 } from '../src/sodium/ecc'
+import type { DID } from '../src/types'
 import type { LockKey } from '../src'
-// import Debug from '@bicycle-codes/debug/node'
-// const debug = Debug()
+import Debug from '@bicycle-codes/debug/node'
+const debug = Debug()
 
 let alicesKeys:LockKey
 test('create a keypair', async t => {
@@ -30,9 +31,17 @@ test('sign something, return Uint8Array', async t => {
     t.ok(isOk, 'should verify a valid signature')
 })
 
+let did:DID
 test('transform the public key into a DID', async t => {
-    const pubKey = await publicKeyToDid(alicesKeys.publicKey)
+    const pubKey = did = await publicKeyToDid(alicesKeys.publicKey)
     t.ok(pubKey.startsWith('did:key:z'))
+    debug('**did**', did)
+})
+
+test('transform the did to a public key', t => {
+    const pubKey = didToPublicKey(did)
+    t.ok(pubKey.publicKey instanceof Uint8Array, 'should return a Uint8Array')
+    t.equal(pubKey.type, 'ed25519', 'should have the correct key type')
 })
 
 let sig:string

@@ -1,7 +1,7 @@
-import * as uint8arrays from 'uint8arrays'
+import * as u from 'uint8arrays'
 import type libsodium from 'libsodium-wrappers'
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
-import type { KeyAlgorithm, Msg, JSONValue, LockKey } from './types'
+import type { KeyAlgorithm, Msg, JSONValue, LockKey, DID } from './types'
 import { CharSize } from './types'
 import { InvalidMaxValue } from './errors'
 import {
@@ -10,7 +10,8 @@ import {
     RSA_DID_PREFIX,
     KEY_TYPE,
     EDWARDS_DID_PREFIX,
-    BLS_DID_PREFIX
+    BLS_DID_PREFIX,
+    BASE58_DID_PREFIX
 } from './constants'
 
 export const normalizeToBuf = (
@@ -125,15 +126,15 @@ export function joinBufs (fst:ArrayBuffer, snd:ArrayBuffer):ArrayBuffer {
 }
 
 export function arrBufToBase64 (buf:ArrayBuffer):string {
-    return uint8arrays.toString(new Uint8Array(buf), 'base64pad')
+    return u.toString(new Uint8Array(buf), 'base64pad')
 }
 
 export function toString (arr:Uint8Array) {
-    return uint8arrays.toString(arr, 'base64pad')
+    return u.toString(arr, 'base64pad')
 }
 
 export function base64ToArrBuf (string:string):ArrayBuffer {
-    return uint8arrays.fromString(string, 'base64pad').buffer
+    return u.fromString(string, 'base64pad').buffer
 }
 
 export async function sha256 (bytes:Uint8Array):Promise<Uint8Array> {
@@ -183,7 +184,7 @@ export function publicExponent ():Uint8Array {
  * @returns {Uint8Array}
  */
 export function fromString (str:string) {
-    return uint8arrays.fromString(str, 'base64pad')
+    return u.fromString(str, 'base64pad')
 }
 
 /**
@@ -261,4 +262,23 @@ export const magicBytes:Record<KeyAlgorithm, Uint8Array> = {
     'bls12-381': new Uint8Array([0xea, 0x01]),
     ed25519: new Uint8Array([0xed, 0x01]),
     rsa: new Uint8Array([0x00, 0xf5, 0x02]),
+}
+
+export function didToPublicKey (did:DID):({
+    publicKey:Uint8Array,
+    type:'rsa'|'ed25519'|'bls12-381'
+}) {
+    if (!did.startsWith(BASE58_DID_PREFIX)) {
+        throw new Error(
+            'Please use a base58-encoded DID formatted `did:key:z...`')
+    }
+
+    const didWithoutPrefix = ('' + did.substring(BASE58_DID_PREFIX.length))
+    const magicalBuf = u.fromString(didWithoutPrefix, 'base58btc')
+    const { keyBuffer, type } = parseMagicBytes(magicalBuf.buffer)
+
+    return {
+        publicKey: new Uint8Array(keyBuffer),
+        type
+    }
 }
