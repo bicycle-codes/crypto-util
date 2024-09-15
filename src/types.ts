@@ -5,6 +5,15 @@ export type PublicKey = CryptoKey
 export type SymmKey = CryptoKey
 export type CipherText = ArrayBuffer
 
+export interface LockKey {
+    keyFormatVersion:number;
+    iv:Uint8Array;
+    publicKey:Uint8Array;
+    privateKey:Uint8Array;
+    encPK:Uint8Array;
+    encSK:Uint8Array;
+}
+
 export type SymmAlg = 'AES-CTR'|'AES-CBC'|'AES-GCM'
 
 export enum EccCurve {

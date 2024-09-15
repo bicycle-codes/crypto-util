@@ -64,6 +64,7 @@
   },
   "dependencies": {
     "@bicycle-codes/one-webcrypto": "^1.1.2",
+    "libsodium": "^0.7.15",
     "uint8arrays": "^5.1.0"
   },
   "devDependencies": {
