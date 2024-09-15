@@ -1,23 +1,37 @@
 import libsodium from 'libsodium-wrappers'
 import * as u from 'uint8arrays'
 import type { LockKey, JSONValue } from '../types'
-import { generateEntropy, fromString, asBufferOrString, toString } from '../util'
+import {
+    generateEntropy,
+    fromString,
+    asBufferOrString,
+    toString,
+    stringify
+} from '../util'
+// import Debug from '@bicycle-codes/debug'
+// const debug = Debug()
 
-await libsodium.ready
-const sodium = libsodium
+export { stringify }
 
-const IV_BYTE_LENGTH = sodium.crypto_sign_SEEDBYTES
 const CURRENT_LOCK_KEY_FORMAT_VERSION = 1
 
 /**
  * Create a new keypair.
  */
 export async function create ():Promise<LockKey> {
-    const keys = deriveLockKey()
+    const keys = await deriveLockKey()
     return keys
 }
 
-function deriveLockKey (iv = generateEntropy(IV_BYTE_LENGTH)):LockKey {
+async function deriveLockKey (iv?:Uint8Array):Promise<LockKey> {
+    await libsodium.ready
+    const sodium = libsodium
+
+    const IV_BYTE_LENGTH = sodium.crypto_sign_SEEDBYTES
+    if (!iv) {
+        iv = generateEntropy(sodium, IV_BYTE_LENGTH)
+    }
+
     try {
         const ed25519KeyPair = sodium.crypto_sign_seed_keypair(iv)
 
@@ -40,6 +54,9 @@ function deriveLockKey (iv = generateEntropy(IV_BYTE_LENGTH)):LockKey {
     }
 }
 
+/**
+ * Verify a given signature and message.
+ */
 export async function verify (
     data:string|Uint8Array,
     sig:string|Uint8Array,
@@ -55,7 +72,7 @@ export async function verify (
 
         const isOk = sodium.crypto_sign_verify_detached(
             typeof sig === 'string' ? fromString(sig) : sig,
-            asBufferOrString(data),
+            data,
             pubKey
         )
 
@@ -94,6 +111,8 @@ export async function sign (
     } = { outputFormat: 'string' }
 ):Promise<string|Uint8Array> {
     const outputFormat = opts.outputFormat
+    await libsodium.ready
+    const sodium = libsodium
 
     const sig = sodium.crypto_sign_detached(
         data,
@@ -103,21 +122,23 @@ export async function sign (
     return outputFormat === 'string' ? toString(sig) : sig
 }
 
-export function encrypt (data:JSONValue, lockKey:LockKey):string
-export function encrypt (data:JSONValue, lockKey:LockKey, { outputFormat }:{
+export async function encrypt (data:JSONValue, lockKey:LockKey):Promise<string>
+export async function encrypt (data:JSONValue, lockKey:LockKey, { outputFormat }:{
     outputFormat:'string'
-}):string
-export function encrypt (data:JSONValue, lockKey, { outputFormat }:{
+}):Promise<string>
+export async function encrypt (data:JSONValue, lockKey, { outputFormat }:{
     outputFormat:'raw'
-}):Uint8Array
+}):Promise<Uint8Array>
 
-export function encrypt (
+export async function encrypt (
     data:JSONValue,
     lockKey:LockKey,
     opts:{
         outputFormat:'string'|'raw';
     } = { outputFormat: 'string' }
-):string|Uint8Array {
+):Promise<string|Uint8Array> {
+    await libsodium.ready
+    const sodium = libsodium
     const { outputFormat } = opts
 
     if (data == null) {
@@ -128,7 +149,7 @@ export function encrypt (
         const dataBuffer = asBufferOrString(data)
         const encData = sodium.crypto_box_seal(dataBuffer, lockKey.encPK)
 
-        const output = (outputFormat.toLowerCase() === 'base64') ?
+        const output = (outputFormat.toLowerCase() === 'string') ?
             toString(encData) :
             encData
 
@@ -145,41 +166,31 @@ export function encrypt (
  * If called with { outputFormat: 'raw' }, will return
  * a Uint8Array.
  */
-export function decrypt (
+export async function decrypt (
     data:string|Uint8Array,
     lockKey:LockKey,
     { outputFormat }:{
-        outputFormat?:'raw';
-        parseJSON:any;
+        outputFormat:'raw';
     }
-):Uint8Array
-export function decrypt (
+):Promise<Uint8Array>
+export async function decrypt (
     data:string|Uint8Array,
     lockKey:LockKey,
-    { outputFormat, parseJSON }:{
-        outputFormat?:'utf8',
-        parseJSON:false
-    }
-):string
-export function decrypt (
-    data:string|Uint8Array,
-    lockKey:LockKey,
-    { outputFormat, parseJSON }:{
+    opts?:{
         outputFormat:'utf8',
-        parseJSON?:true
     }
-):JSONValue
+):Promise<string>
 
-export function decrypt (
+export async function decrypt (
     data:string|Uint8Array,
     lockKey:LockKey,
-    opts:{ outputFormat?:'utf8'|'raw', parseJSON?:boolean } = {
-        outputFormat: 'utf8',
-        parseJSON: true
+    opts:{ outputFormat?:'utf8'|'raw' } = {
+        outputFormat: 'utf8'
     }
-):string|Uint8Array|JSONValue {
+):Promise<string|Uint8Array|JSONValue> {
+    await libsodium.ready
+    const sodium = libsodium
     const outputFormat = opts.outputFormat || 'utf8'
-    const parseJSON = opts.parseJSON ?? true
 
     const dataBuffer = sodium.crypto_box_seal_open(
         typeof data === 'string' ? fromString(data) : data,
@@ -189,7 +200,7 @@ export function decrypt (
 
     if (outputFormat === 'utf8') {
         const decodedData = u.toString(dataBuffer, 'utf-8')
-        return (parseJSON ? JSON.parse(decodedData) : decodedData)
+        return decodedData
     }
 
     return dataBuffer

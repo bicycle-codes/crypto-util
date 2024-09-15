@@ -1,10 +1,31 @@
 import { test } from '@bicycle-codes/tapzero'
-import { create, sign, verify } from '../src/sodium/ecc'
+import { fromString } from '../src'
+import {
+    create,
+    sign,
+    verify,
+    stringify,
+    encrypt,
+    decrypt
+} from '../src/sodium/ecc'
+import type { LockKey } from '../src'
+// import Debug from '@bicycle-codes/debug/node'
+// const debug = Debug()
 
-let alicesKeys
+let alicesKeys:LockKey
 test('create a keypair', async t => {
     const keys = alicesKeys = await create()
     t.ok(keys.privateKey, 'should return some keys')
+})
+
+test('sign something, return Uint8Array', async t => {
+    const sig = await sign('hello sodium', alicesKeys, { outputFormat: 'raw' })
+    t.ok(sig instanceof Uint8Array,
+        'should return the signature as a Uint8Array')
+    const isOk = await verify('hello sodium', sig, {
+        publicKey: alicesKeys.publicKey
+    })
+    t.ok(isOk, 'should verify a valid signature')
 })
 
 let sig:string
@@ -14,66 +35,49 @@ test('sign something', async t => {
 })
 
 test('verify a signature', async t => {
-    const isOk = await verify('hello world', sig, alicesKeys)
-    t.equal(isOk, true, 'shoudl verify a valid signature')
+    const isOk = await verify('hello sodium', fromString(sig), {
+        publicKey: alicesKeys.publicKey
+    })
+    t.equal(isOk, true, 'should verify a valid signature')
 })
 
-// import { test, expect, describe } from 'vitest'
-// import {
-//     deriveLockKey,
-//     signData,
-//     verify,
-//     encrypt,
-//     decrypt,
-//     stringify
-// } from '.'
+let keyString:string
+test('serialize the public key', (t) => {
+    keyString = stringify(alicesKeys)
+    t.equal(typeof keyString, 'string', 'should return a string')
+})
 
-// describe('webauthn-keys', () => {
-//     let key
-//     test('create some keys', async () => {
-//         key = await deriveLockKey()
-//         expect(key).toBeTruthy()
-//     })
+test('verify a signature given a string public key', async (t) => {
+    const isOk = await verify('hello sodium', sig, {
+        publicKey: keyString
+    })
+    t.ok(isOk, 'Can verify given a string as public key')
+})
 
-//     let keyString:string
-//     test('serialize the public key', () => {
-//         keyString = stringify(key)
-//         expect(keyString).to.be.toBeTypeOf('string')
-//     })
+test('verify an invalid signature', async t => {
+    const isOk = await verify('hello bad signature', sig, {
+        publicKey: keyString
+    })
+    t.equal(isOk, false, 'should not verify an invalid signature')
+})
 
-//     let sig:string
-//     test('sign something', async () => {
-//         sig = await signData('hello world', key)
-//         expect(sig).to.be.a('string')
-//         expect(sig.length).to.equal(88)
-//     })
+let encrypted:string
+test('encrypt something', async t => {
+    encrypted = await encrypt('hello encryption', alicesKeys)
+    t.equal(typeof encrypted, 'string', 'should return a string by default')
+})
 
-//     test('verify a signature', async () => {
-//         const isOk = await verify('hello world', sig, key)
-//         expect(isOk).toEqual(true)
-//     })
+test('decrypt', async t => {
+    const decrypted = await decrypt(encrypted, alicesKeys, {
+        outputFormat: 'utf8'
+    })
+    t.equal(decrypted, 'hello encryption', 'should decrypt the string')
 
-//     test('verify a signature given a string public key', async () => {
-//         const isOk = await verify('hello world', sig, {
-//             publicKey: keyString
-//         })
-//         expect(isOk).toEqual(true)
-//     })
+    const decrypted2 = await decrypt(encrypted, alicesKeys)
+    t.equal(decrypted2, 'hello encryption', 'should return a string by default')
 
-//     test('verify an invalid signature', async () => {
-//         const badSig = 'abc' + sig.slice(-3)
-//         const isOk = await verify('hello world', badSig, key)
-//         expect(isOk).toEqual(false)
-//     })
-
-//     let encrypted:string
-//     test('encrypt something', async () => {
-//         encrypted = encrypt('hello encryption', key)
-//         expect(encrypted).to.be.a('string')
-//     })
-
-//     test('decrypt the string', async () => {
-//         const decrypted = decrypt(encrypted, key, { parseJSON: false })
-//         expect(decrypted).to.equal('hello encryption')
-//     })
-// })
+    const decrypted3 = await decrypt(encrypted, alicesKeys, {
+        outputFormat: 'raw'
+    })
+    t.ok(decrypted3 instanceof Uint8Array, 'can return a Uint8Array')
+})

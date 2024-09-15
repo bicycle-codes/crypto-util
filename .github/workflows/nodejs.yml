@@ -30,5 +30,4 @@ jobs:
         npm run test:node
     - name: Run browser tests
       run: |
-        npm run build-tests:browser
-        xvfb-run --server-args="-screen 0 1920x1080x24" npm run test-tape-run
+        xvfb-run --server-args="-screen 0 1920x1080x24" npm test

@@ -1,6 +1,7 @@
 import * as uint8arrays from 'uint8arrays'
+import type libsodium from 'libsodium-wrappers'
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
-import type { Msg, JSONValue } from './types'
+import type { Msg, JSONValue, LockKey } from './types'
 import { CharSize } from './types'
 import { InvalidMaxValue } from './errors'
 import {
@@ -99,7 +100,10 @@ export function strToArrBuf (
     return view.buffer
 }
 
-export function generateEntropy (sodium, size:number = DEFAULT_ENTROPY_SIZE):Uint8Array {
+export function generateEntropy (
+    sodium:typeof libsodium,
+    size:number = DEFAULT_ENTROPY_SIZE
+):Uint8Array {
     return sodium.randombytes_buf(size)
 }
 
@@ -269,4 +273,9 @@ export function asBufferOrString (
 
 export function isByteArray (val:unknown):boolean {
     return (val instanceof Uint8Array && val.buffer instanceof ArrayBuffer)
+}
+
+export function stringify (keys:LockKey):string {
+    return toString(keys.publicKey)
+    // => 'welOX9O96R6WH0S8cqqwMlPAJ3VwMgAZEnc1wa1MN70='
 }
