@@ -5,7 +5,7 @@ import {
     exportKey as exportAesKey,
     encrypt as aesEncrypt,
     decrypt as aesDecrypt
-} from '../src/aes.js'
+} from '../src/aes/webcrypto.js'
 import {
     create as createEcc,
     sign as eccSign,
@@ -15,10 +15,9 @@ import {
     encrypt as eccEncrypt,
     exportPublicKey as eccExportKey,
     publicKeyToDid as eccPublicToDid,
-    didToPublicKey as eccDidToPublicKey,
     importDid,
     verifyWithDid as eccVerifyWithDid
-} from '../src/ecc.js'
+} from '../src/ecc/webcrypto.js'
 import {
     create as createRsa,
     sign as rsaSign,
@@ -30,11 +29,11 @@ import {
     didToPublicKey as rsaDidToPublicKey,
     importDid as rsaImportDid,
     verifyWithDid as rsaVerifyWithDid
-} from '../src/rsa.js'
+} from '../src/rsa/webcrypto.js'
 import {
     arrBufToBase64,
     isCryptoKeyPair,
-    didToPublicKey
+    didToPublicKey,
 } from '../src/index.js'
 import { KeyUse, type DID } from '../src/types.js'
 
@@ -179,7 +178,7 @@ test('ECC public key to DID, pass a CryptoKey instance', async t => {
 })
 
 test('ECC DID to public key', t => {
-    const key = eccDidToPublicKey(eccDid)
+    const key = didToPublicKey(eccDid)
     t.ok(key.publicKey instanceof Uint8Array, 'returns the public key as Uint8Array')
     t.equal(key.type, 'ed25519', 'should return the key type')
 })

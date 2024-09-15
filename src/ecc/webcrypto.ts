@@ -1,6 +1,6 @@
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
 import * as uint8arrays from 'uint8arrays'
-import { magicBytes } from './index.js'
+import { magicBytes, didToPublicKey } from '../index.js'
 import {
     BASE58_DID_PREFIX,
     DEFAULT_CHAR_SIZE,
@@ -10,8 +10,8 @@ import {
     DEFAULT_ECC_CURVE,
     DEFAULT_SYMM_ALGORITHM,
     DEFAULT_SYMM_LEN,
-} from './constants'
-import { checkValidKeyUse } from './errors'
+} from '../constants'
+import { checkValidKeyUse } from '../errors'
 import type {
     Msg,
     PrivateKey,
@@ -22,19 +22,19 @@ import type {
     SymmKey,
     SymmAlg,
     DID
-} from './types'
+} from '../types'
 import {
     KeyUse,
     EccCurve
-} from './types'
-import * as aes from './aes'
+} from '../types'
+import * as aes from '../aes/webcrypto.js'
 import {
     normalizeUnicodeToBuf,
     normalizeBase64ToBuf,
     arrBufToBase64,
     base64ToArrBuf,
-    parseMagicBytes,
-} from './util'
+    // parseMagicBytes,
+} from '../util'
 
 /**
  * Create a new keypair.
@@ -320,24 +320,24 @@ export async function verifyWithDid (
     }
 }
 
-/**
- * Convert the given DID string to a public key Uint8Array.
- */
-export function didToPublicKey (did:string):({
-    publicKey:Uint8Array,
-    type:'ed25519'
-}) {
-    if (!did.startsWith(BASE58_DID_PREFIX)) {
-        throw new Error(
-            'Please use a base58-encoded DID formatted `did:key:z...`')
-    }
+// /**
+//  * Convert the given DID string to a public key Uint8Array.
+//  */
+// export function didToPublicKey (did:string):({
+//     publicKey:Uint8Array,
+//     type:'ed25519'
+// }) {
+//     if (!did.startsWith(BASE58_DID_PREFIX)) {
+//         throw new Error(
+//             'Please use a base58-encoded DID formatted `did:key:z...`')
+//     }
 
-    const didWithoutPrefix = ('' + did.substring(BASE58_DID_PREFIX.length))
-    const magicalBuf = uint8arrays.fromString(didWithoutPrefix, 'base58btc')
-    const { keyBuffer } = parseMagicBytes(magicalBuf.buffer)
+//     const didWithoutPrefix = ('' + did.substring(BASE58_DID_PREFIX.length))
+//     const magicalBuf = uint8arrays.fromString(didWithoutPrefix, 'base58btc')
+//     const { keyBuffer } = parseMagicBytes(magicalBuf.buffer)
 
-    return {
-        publicKey: new Uint8Array(keyBuffer),
-        type: 'ed25519'
-    }
-}
+//     return {
+//         publicKey: new Uint8Array(keyBuffer),
+//         type: 'ed25519'
+//     }
+// }

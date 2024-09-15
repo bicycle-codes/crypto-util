@@ -1,7 +1,7 @@
 import * as uint8arrays from 'uint8arrays'
 import type libsodium from 'libsodium-wrappers'
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
-import type { Msg, JSONValue, LockKey } from './types'
+import type { KeyAlgorithm, Msg, JSONValue, LockKey } from './types'
 import { CharSize } from './types'
 import { InvalidMaxValue } from './errors'
 import {
@@ -255,4 +255,10 @@ export function isByteArray (val:unknown):boolean {
 export function stringify (keys:LockKey):string {
     return toString(keys.publicKey)
     // => 'welOX9O96R6WH0S8cqqwMlPAJ3VwMgAZEnc1wa1MN70='
+}
+
+export const magicBytes:Record<KeyAlgorithm, Uint8Array> = {
+    'bls12-381': new Uint8Array([0xea, 0x01]),
+    ed25519: new Uint8Array([0xed, 0x01]),
+    rsa: new Uint8Array([0x00, 0xf5, 0x02]),
 }
