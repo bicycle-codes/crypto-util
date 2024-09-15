@@ -29,6 +29,10 @@ test('sign something, return Uint8Array', async t => {
     t.ok(isOk, 'should verify a valid signature')
 })
 
+test('transform the public key into a did', t => {
+
+})
+
 let sig:string
 test('sign something', async t => {
     sig = await sign('hello sodium', alicesKeys)

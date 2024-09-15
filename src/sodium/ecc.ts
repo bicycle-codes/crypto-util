@@ -1,6 +1,6 @@
 import libsodium from 'libsodium-wrappers'
 import * as u from 'uint8arrays'
-import type { LockKey, JSONValue } from '../types'
+import type { LockKey, JSONValue, DID } from '../types'
 import {
     generateEntropy,
     fromString,
@@ -17,6 +17,15 @@ const CURRENT_LOCK_KEY_FORMAT_VERSION = 1
 
 export function importPublicKey (key:string):Uint8Array {
     return fromString(key)
+}
+
+/**
+ * Convert a DID format string to a public key instance.
+ */
+export async function importDid (did:DID):Promise<PublicKey> {
+    const parsed = didToPublicKey(did)
+    const pubKey = await importPublicKey(parsed.publicKey)
+    return pubKey
 }
 
 /**

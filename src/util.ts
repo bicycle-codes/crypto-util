@@ -7,7 +7,6 @@ import { InvalidMaxValue } from './errors'
 import {
     DEFAULT_CHAR_SIZE,
     DEFAULT_ENTROPY_SIZE,
-    BASE58_DID_PREFIX,
     RSA_DID_PREFIX,
     KEY_TYPE,
     EDWARDS_DID_PREFIX,
@@ -26,28 +25,6 @@ export const normalizeToBuf = (
         return temp.buffer
     } else {
         throw new Error('Improper value. Must be a string, ArrayBuffer, Uint8Array')
-    }
-}
-
-/**
- * Convert the given DID string to a public key Uint8Array.
- */
-export function didToPublicKey (did:string):({
-    publicKey:Uint8Array,
-    type:'ed25519'
-}) {
-    if (!did.startsWith(BASE58_DID_PREFIX)) {
-        throw new Error(
-            'Please use a base58-encoded DID formatted `did:key:z...`')
-    }
-
-    const didWithoutPrefix = ('' + did.substring(BASE58_DID_PREFIX.length))
-    const magicalBuf = uint8arrays.fromString(didWithoutPrefix, 'base58btc')
-    const { keyBuffer } = parseMagicBytes(magicalBuf.buffer)
-
-    return {
-        publicKey: new Uint8Array(keyBuffer),
-        type: 'ed25519'
     }
 }
 
