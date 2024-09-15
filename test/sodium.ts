@@ -20,7 +20,7 @@ import type { LockKey } from '../src'
 import Debug from '@bicycle-codes/debug/node'
 const debug = Debug()
 
-test('ECC', t => {
+test('', t => {
     t.comment('-----------ECC tests-----------')
 })
 
@@ -31,7 +31,7 @@ test('create a keypair', async t => {
 })
 
 test('sign something, return Uint8Array', async t => {
-    const sig = await sign('hello sodium', alicesKeys, { outputFormat: 'raw' })
+    const sig = await sign('hello sodium', alicesKeys, { format: 'raw' })
     t.ok(sig instanceof Uint8Array,
         'should return the signature as a Uint8Array')
     const isOk = await verify('hello sodium', sig, {
@@ -112,7 +112,7 @@ test('decrypt', async t => {
     t.ok(decrypted3 instanceof Uint8Array, 'can return a Uint8Array')
 })
 
-test('AES', t => {
+test('', t => {
     t.comment('-----------AES tests-----------')
 })
 

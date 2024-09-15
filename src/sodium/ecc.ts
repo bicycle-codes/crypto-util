@@ -114,11 +114,11 @@ export async function verify (
 export async function sign (data:string|Uint8Array, key:LockKey):Promise<string>
 
 export async function sign (data:string|Uint8Array, key:LockKey, opts:{
-    outputFormat:'raw'
+    format:'raw'
 }):Promise<Uint8Array>
 
 export async function sign (data:string|Uint8Array, key:LockKey, opts:{
-    outputFormat:'string'
+    format:'string'
 }):Promise<string>
 
 /**
@@ -136,10 +136,10 @@ export async function sign (
     data:string|Uint8Array,
     key:LockKey,
     opts:{
-        outputFormat:'string'|'raw'
-    } = { outputFormat: 'string' }
+        format:'string'|'raw'
+    } = { format: 'string' }
 ):Promise<string|Uint8Array> {
-    const outputFormat = opts.outputFormat
+    const outputFormat = opts.format
     await libsodium.ready
     const sodium = libsodium
 

@@ -33,7 +33,6 @@ import {
     normalizeBase64ToBuf,
     arrBufToBase64,
     base64ToArrBuf,
-    // parseMagicBytes,
 } from '../util'
 
 /**
@@ -305,6 +304,9 @@ export async function publicKeyToDid (
         uint8arrays.toString(prefixedBuf, 'base58btc')) as DID
 }
 
+/**
+ * Verify the given string and signature with the given DID.
+ */
 export async function verifyWithDid (
     msg:string,
     sig:string,
@@ -319,25 +321,3 @@ export async function verifyWithDid (
         return false
     }
 }
-
-// /**
-//  * Convert the given DID string to a public key Uint8Array.
-//  */
-// export function didToPublicKey (did:string):({
-//     publicKey:Uint8Array,
-//     type:'ed25519'
-// }) {
-//     if (!did.startsWith(BASE58_DID_PREFIX)) {
-//         throw new Error(
-//             'Please use a base58-encoded DID formatted `did:key:z...`')
-//     }
-
-//     const didWithoutPrefix = ('' + did.substring(BASE58_DID_PREFIX.length))
-//     const magicalBuf = uint8arrays.fromString(didWithoutPrefix, 'base58btc')
-//     const { keyBuffer } = parseMagicBytes(magicalBuf.buffer)
-
-//     return {
-//         publicKey: new Uint8Array(keyBuffer),
-//         type: 'ed25519'
-//     }
-// }
