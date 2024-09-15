@@ -17,8 +17,6 @@ import {
 } from '../src/sodium/aes'
 import type { DID } from '../src/types'
 import type { LockKey } from '../src'
-import Debug from '@bicycle-codes/debug/node'
-const debug = Debug()
 
 test('', t => {
     t.comment('-----------ECC tests-----------')
@@ -44,7 +42,6 @@ let did:DID
 test('transform the public key into a DID', async t => {
     const pubKey = did = await publicKeyToDid(alicesKeys.publicKey)
     t.ok(pubKey.startsWith('did:key:z'))
-    debug('**did**', did)
 })
 
 test('transform the did to a public key', t => {
@@ -127,13 +124,11 @@ test('create an AES key', async t => {
 let encryptedAes:string
 test('encrypt with sodium + AES', async t => {
     encryptedAes = await encryptAes('hello sodium + AES', aesKey)
-    debug(encryptedAes)
     t.equal(typeof encryptedAes, 'string', 'should return a string by default')
 })
 
 test('decrypt an AES encrypted string with sodium', async t => {
     const decrypted = await decryptAes(encryptedAes, aesKey)
-    debug(decrypted)
     t.equal(typeof decrypted, 'string', 'should return a string by default')
     t.equal(decrypted, 'hello sodium + AES', 'should decrypt to the right text')
 })
