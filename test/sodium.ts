@@ -7,7 +7,8 @@ import {
     stringify,
     encrypt,
     decrypt,
-    importPublicKey
+    importPublicKey,
+    publicKeyToDid
 } from '../src/sodium/ecc'
 import type { LockKey } from '../src'
 // import Debug from '@bicycle-codes/debug/node'
@@ -29,8 +30,9 @@ test('sign something, return Uint8Array', async t => {
     t.ok(isOk, 'should verify a valid signature')
 })
 
-test('transform the public key into a did', t => {
-
+test('transform the public key into a DID', async t => {
+    const pubKey = await publicKeyToDid(alicesKeys.publicKey)
+    t.ok(pubKey.startsWith('did:key:z'))
 })
 
 let sig:string

@@ -1,13 +1,16 @@
 import libsodium from 'libsodium-wrappers'
 import * as u from 'uint8arrays'
 import type { LockKey, JSONValue, DID } from '../types'
+import { BASE58_DID_PREFIX } from '../constants'
 import {
     generateEntropy,
     fromString,
     asBufferOrString,
     toString,
-    stringify
+    stringify,
+    magicBytes,
 } from '../util'
+import { didToPublicKey } from '../index.js'
 // import Debug from '@bicycle-codes/debug'
 // const debug = Debug()
 
@@ -20,11 +23,24 @@ export function importPublicKey (key:string):Uint8Array {
 }
 
 /**
+ * Convert a public key to a DID format string.
+ */
+export async function publicKeyToDid (
+    publicKey:Uint8Array
+):Promise<DID> {
+    const prefix = magicBytes.ed25519
+    const prefixedBuf = u.concat([prefix, publicKey])
+
+    return (BASE58_DID_PREFIX +
+        u.toString(prefixedBuf, 'base58btc')) as DID
+}
+
+/**
  * Convert a DID format string to a public key instance.
  */
-export async function importDid (did:DID):Promise<PublicKey> {
+export async function importDid (did:DID):Promise<Uint8Array> {
     const parsed = didToPublicKey(did)
-    const pubKey = await importPublicKey(parsed.publicKey)
+    const pubKey = parsed.publicKey
     return pubKey
 }
 
