@@ -8,6 +8,11 @@
 
 Utility functions for working with crypto keys in the browser or node.
 
+This is some helpful functions that make it easier to work with cryptography. Note this does *not* deal with storing keys. Look at [@bicycle-codes/webauthn-keys](https://github.com/bicycle-codes/webauthn-keys/) (biometric authentication), or using `indexedDB` for help with that.
+
+> [!TIP]
+> Request "persistent" storage with the [`.persist()`](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist) method in the browser.
+
 [See the docs](https://bicycle-codes.github.io/crypto-util/)
 
 ## Contents
@@ -625,3 +630,13 @@ const decrypted = await decrypt(
     AlicesKeys.publicKey
 )
 ```
+
+## see also
+
+* [[question] AES GCM — iv length #74](https://github.com/fission-codes/keystore-idb/issues/74) -- partial motivation for publishing this
+* [`libsodium` docs](https://libsodium.gitbook.io/doc)
+  - [AES256-GCM](https://libsodium.gitbook.io/doc/secret-key_cryptography/aead/aes-256-gcm)
+  > Unless you absolutely need AES-GCM, use AEGIS-256 (crypto_aead_aegis256_*()) instead. It doesn’t have any of these limitations.
+  - [AEGIS-256](https://libsodium.gitbook.io/doc/secret-key_cryptography/aead/aegis-256)
+* [Web Crypto API -- MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API)
+* [StorageManager: persist() method](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist)
