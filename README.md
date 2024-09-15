@@ -13,7 +13,8 @@ This is some helpful functions that make it easier to work with cryptography. No
 > [!TIP]
 > Request "persistent" storage with the [`.persist()`](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist) method in the browser.
 
-[See the docs](https://bicycle-codes.github.io/crypto-util/)
+> [!TIP]
+> [See the docs generated from typescript](https://bicycle-codes.github.io/crypto-util/)
 
 ## Contents
 
