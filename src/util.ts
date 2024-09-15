@@ -1,9 +1,17 @@
 import * as uint8arrays from 'uint8arrays'
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
-import type { Msg } from './types'
+import type { Msg, JSONValue } from './types'
 import { CharSize } from './types'
 import { InvalidMaxValue } from './errors'
-import { DEFAULT_CHAR_SIZE } from './constants'
+import {
+    DEFAULT_CHAR_SIZE,
+    DEFAULT_ENTROPY_SIZE,
+    BASE58_DID_PREFIX,
+    RSA_DID_PREFIX,
+    KEY_TYPE,
+    EDWARDS_DID_PREFIX,
+    BLS_DID_PREFIX
+} from './constants'
 
 export const normalizeToBuf = (
     msg:Msg,
@@ -17,6 +25,28 @@ export const normalizeToBuf = (
         return temp.buffer
     } else {
         throw new Error('Improper value. Must be a string, ArrayBuffer, Uint8Array')
+    }
+}
+
+/**
+ * Convert the given DID string to a public key Uint8Array.
+ */
+export function didToPublicKey (did:string):({
+    publicKey:Uint8Array,
+    type:'ed25519'
+}) {
+    if (!did.startsWith(BASE58_DID_PREFIX)) {
+        throw new Error(
+            'Please use a base58-encoded DID formatted `did:key:z...`')
+    }
+
+    const didWithoutPrefix = ('' + did.substring(BASE58_DID_PREFIX.length))
+    const magicalBuf = uint8arrays.fromString(didWithoutPrefix, 'base58btc')
+    const { keyBuffer } = parseMagicBytes(magicalBuf.buffer)
+
+    return {
+        publicKey: new Uint8Array(keyBuffer),
+        type: 'ed25519'
     }
 }
 
@@ -67,6 +97,10 @@ export function strToArrBuf (
     }
 
     return view.buffer
+}
+
+export function generateEntropy (sodium, size:number = DEFAULT_ENTROPY_SIZE):Uint8Array {
+    return sodium.randombytes_buf(size)
 }
 
 export function randomBuf (
@@ -169,4 +203,70 @@ export function publicExponent ():Uint8Array {
  */
 export function fromString (str:string) {
     return uint8arrays.fromString(str, 'base64pad')
+}
+
+/**
+ * Parse magic bytes on prefixed key-buffer
+ * to determine cryptosystem & the unprefixed key-buffer.
+ */
+export function parseMagicBytes (prefixedKey:ArrayBuffer) {
+    // RSA
+    if (hasPrefix(prefixedKey, RSA_DID_PREFIX)) {
+        return {
+            keyBuffer: prefixedKey.slice(RSA_DID_PREFIX.byteLength),
+            type: KEY_TYPE.RSA
+        }
+    // EDWARDS
+    } else if (hasPrefix(prefixedKey, EDWARDS_DID_PREFIX)) {
+        return {
+            keyBuffer: prefixedKey.slice(EDWARDS_DID_PREFIX.byteLength),
+            type: KEY_TYPE.Edwards
+        }
+    // BLS
+    } else if (hasPrefix(prefixedKey, BLS_DID_PREFIX)) {
+        return {
+            keyBuffer: prefixedKey.slice(BLS_DID_PREFIX.byteLength),
+            type: KEY_TYPE.BLS
+        }
+    }
+
+    throw new Error('Unsupported key algorithm. Try using RSA.')
+}
+
+function hasPrefix (prefixedKey:ArrayBuffer, prefix:ArrayBuffer) {
+    return arrBufsEqual(prefix, prefixedKey.slice(0, prefix.byteLength))
+}
+
+function arrBufsEqual (aBuf:ArrayBuffer, bBuf:ArrayBuffer):boolean {
+    const a = new Uint8Array(aBuf)
+    const b = new Uint8Array(bBuf)
+    if (a.length !== b.length) return false
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false
+    }
+    return true
+}
+
+export function asBufferOrString (
+    data:Uint8Array|ArrayBuffer|string|JSONValue
+):Uint8Array|string {
+    if (data instanceof ArrayBuffer) {
+        return new Uint8Array(data)
+    }
+
+    if (isByteArray(data)) {
+        return (data as Uint8Array)
+    }
+
+    if (typeof data === 'object') {
+        // assume JSON serializable
+        return JSON.stringify(data)
+    }
+
+    // data must be a string
+    return String(data)
+}
+
+export function isByteArray (val:unknown):boolean {
+    return (val instanceof Uint8Array && val.buffer instanceof ArrayBuffer)
 }

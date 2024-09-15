@@ -1,6 +1,6 @@
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
 import * as uint8arrays from 'uint8arrays'
-import { magicBytes, parseMagicBytes } from './index.js'
+import { magicBytes } from './index.js'
 import {
     BASE58_DID_PREFIX,
     DEFAULT_CHAR_SIZE,
@@ -33,7 +33,10 @@ import {
     normalizeBase64ToBuf,
     arrBufToBase64,
     base64ToArrBuf,
+    didToPublicKey
 } from './util'
+
+export { didToPublicKey }
 
 /**
  * Create a new keypair.
@@ -302,28 +305,6 @@ export async function publicKeyToDid (
 
     return (BASE58_DID_PREFIX +
         uint8arrays.toString(prefixedBuf, 'base58btc')) as DID
-}
-
-/**
- * Convert the given DID string to a public key Uint8Array.
- */
-export function didToPublicKey (did:string):({
-    publicKey:Uint8Array,
-    type:'ed25519'
-}) {
-    if (!did.startsWith(BASE58_DID_PREFIX)) {
-        throw new Error(
-            'Please use a base58-encoded DID formatted `did:key:z...`')
-    }
-
-    const didWithoutPrefix = ('' + did.substring(BASE58_DID_PREFIX.length))
-    const magicalBuf = uint8arrays.fromString(didWithoutPrefix, 'base58btc')
-    const { keyBuffer } = parseMagicBytes(magicalBuf.buffer)
-
-    return {
-        publicKey: new Uint8Array(keyBuffer),
-        type: 'ed25519'
-    }
 }
 
 export async function verifyWithDid (

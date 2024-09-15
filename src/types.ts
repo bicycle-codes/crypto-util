@@ -14,6 +14,12 @@ export interface LockKey {
     encSK:Uint8Array;
 }
 
+export type JSONPrimitive = string | number | boolean | null | undefined;
+
+export type JSONValue = JSONPrimitive | JSONValue[] | {
+    [key: string]: JSONValue;
+};
+
 export type SymmAlg = 'AES-CTR'|'AES-CBC'|'AES-GCM'
 
 export enum EccCurve {
