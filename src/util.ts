@@ -88,7 +88,7 @@ export function generateEntropy (
 export function randomBuf (
     length:number,
     { max }:{ max:number } = { max: 255 }
-):ArrayBuffer {
+):Uint8Array {
     if (max < 1 || max > 255) {
         throw InvalidMaxValue
     }
@@ -97,7 +97,7 @@ export function randomBuf (
 
     if (max === 255) {
         webcrypto.getRandomValues(arr)
-        return arr.buffer
+        return arr
     }
 
     let index = 0
@@ -113,7 +113,7 @@ export function randomBuf (
         }
     }
 
-    return arr.buffer
+    return arr
 }
 
 export function joinBufs (fst:ArrayBuffer, snd:ArrayBuffer):ArrayBuffer {
