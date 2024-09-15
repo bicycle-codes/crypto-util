@@ -10,10 +10,19 @@ import {
     importPublicKey,
     publicKeyToDid
 } from '../src/sodium/ecc'
+import {
+    create as createAes,
+    encrypt as encryptAes,
+    decrypt as decryptAes
+} from '../src/sodium/aes'
 import type { DID } from '../src/types'
 import type { LockKey } from '../src'
 import Debug from '@bicycle-codes/debug/node'
 const debug = Debug()
+
+test('ECC', t => {
+    t.comment('-----------ECC tests-----------')
+})
 
 let alicesKeys:LockKey
 test('create a keypair', async t => {
@@ -101,4 +110,30 @@ test('decrypt', async t => {
         outputFormat: 'raw'
     })
     t.ok(decrypted3 instanceof Uint8Array, 'can return a Uint8Array')
+})
+
+test('AES', t => {
+    t.comment('-----------AES tests-----------')
+})
+
+let aesKey:string
+test('create an AES key', async t => {
+    const newKey = aesKey = await createAes()
+    t.equal(typeof newKey, 'string', 'should return a string by default')
+    const arrKey = await createAes({ format: 'raw' })
+    t.ok(arrKey instanceof Uint8Array, 'Can return a Uint8Array')
+})
+
+let encryptedAes:string
+test('encrypt with sodium + AES', async t => {
+    encryptedAes = await encryptAes('hello sodium + AES', aesKey)
+    debug(encryptedAes)
+    t.equal(typeof encryptedAes, 'string', 'should return a string by default')
+})
+
+test('decrypt an AES encrypted string with sodium', async t => {
+    const decrypted = await decryptAes(encryptedAes, aesKey)
+    debug(decrypted)
+    t.equal(typeof decrypted, 'string', 'should return a string by default')
+    t.equal(decrypted, 'hello sodium + AES', 'should decrypt to the right text')
 })

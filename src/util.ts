@@ -116,13 +116,16 @@ export function randomBuf (
     return arr
 }
 
-export function joinBufs (fst:ArrayBuffer, snd:ArrayBuffer):ArrayBuffer {
+export function joinBufs (
+    fst:ArrayBuffer|Uint8Array,
+    snd:ArrayBuffer|Uint8Array
+):Uint8Array {
     const view1 = new Uint8Array(fst)
     const view2 = new Uint8Array(snd)
     const joined = new Uint8Array(view1.length + view2.length)
     joined.set(view1)
     joined.set(view2, view1.length)
-    return joined.buffer
+    return joined
 }
 
 export function arrBufToBase64 (buf:ArrayBuffer):string {
