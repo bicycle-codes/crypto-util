@@ -3,7 +3,7 @@ import { webcrypto } from '@bicycle-codes/one-webcrypto'
 import type { Msg } from './types'
 import { CharSize } from './types'
 import { InvalidMaxValue } from './errors'
-import { DEFAULT_CHAR_SIZE } from './constants'
+import { DEFAULT_CHAR_SIZE, IV_BYE_LENGTH } from './constants'
 
 export const normalizeToBuf = (
     msg:Msg,
@@ -67,6 +67,12 @@ export function strToArrBuf (
     }
 
     return view.buffer
+}
+
+export function generateEntropy (ivSize:number = IV_BYE_LENGTH):Uint8Array {
+    const seed = new Uint8Array(ivSize)
+    crypto.getRandomValues(seed)
+    return seed
 }
 
 export function randomBuf (

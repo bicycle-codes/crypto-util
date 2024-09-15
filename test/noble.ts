@@ -12,7 +12,9 @@ import {
     exportPublicKey,
     publicKeyToDid,
     didToPublicKey,
-    encrypt as eccEncrypt
+    encrypt as eccEncrypt,
+    decrypt as eccDecrypt,
+    x25519Keygen
 } from '../src/noble/ecc'
 import type { DID } from '../src/types'
 import type { Cipher } from '../src/noble'
@@ -47,7 +49,7 @@ let aliceEncKeys:Keypair
 let aliceSignKeys:Keypair
 test('create an ECC keypair', async t => {
     aliceEncKeys = await createEcc()
-    aliceSignKeys = await createEcc()
+    aliceSignKeys = await x25519Keygen()
     t.ok(aliceEncKeys.privateKey, 'should return a new keypair')
     t.ok(aliceSignKeys.privateKey, 'should return a new keypair')
 })
@@ -83,18 +85,36 @@ test('transform the DID string to a public key', t => {
 })
 
 test('verify the signature with a Uint8Array public key', async t => {
+    console.log('the signature', sig)
     const isOk = await eccVerify('hello ecc', sig, aliceSignKeys.publicKey)
-    t.ok(isOk, 'should verify a valid signature')
+    t.ok(isOk, 'should verify a valid signature given a Uint8Array')
 })
 
 test('verify the signature with a DID format public key', async t => {
     const isOk = await eccVerify('hello ecc', sig, did)
-    t.ok(isOk, 'should verify a valid signature')
+    t.ok(isOk, 'should verify a valid signature given a DID')
 })
 
 let bobEncKeys:Keypair
+let nobleEncrypted:string
 test('ecnrypt something with ECC', async t => {
-    bobEncKeys = await createEcc()
+    bobEncKeys = x25519Keygen()
 
-    const encrypted = await 
+    const encrypted = nobleEncrypted = await eccEncrypt(
+        'hello noble',
+        aliceEncKeys.privateKey,
+        bobEncKeys.publicKey
+    )
+
+    t.equal(typeof encrypted, 'string', 'should return a string by default')
+})
+
+test('decrypt with ECC', async t => {
+    const decrypted = await eccDecrypt(
+        nobleEncrypted,
+        bobEncKeys.privateKey,
+        aliceEncKeys.publicKey
+    )
+
+    t.equal(decrypted, 'hello noble', 'should decrypt the string')
 })

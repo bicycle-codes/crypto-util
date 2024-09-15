@@ -149,6 +149,7 @@ export async function encrypt (
 ):Promise<string>
 
 /**
+ * Use a public and private key to generate a new secret key.
  * Encrypt the given message. Returns a string by default. Pass
  * `{ format: 'raw' }` to return a `Uint8Array`.
  */
@@ -187,7 +188,7 @@ export async function encrypt (
 export async function decrypt (
     msg:Msg,
     privateKey:PrivateKey,
-    publicKey:string|PublicKey,
+    publicKey:string|Uint8Array|PublicKey,
     curve:EccCurve = DEFAULT_ECC_CURVE,
     opts?:Partial<{
         alg:'AES-GCM'|'AES-CBC'|'AES-CTR'
@@ -195,9 +196,11 @@ export async function decrypt (
         iv:ArrayBuffer
     }>
 ):Promise<string> {
-    const importedPublicKey = typeof publicKey === 'string'
-        ? await importPublicKey(publicKey, curve, KeyUse.Encrypt)
-        : publicKey
+    const importedPublicKey = (
+        (typeof publicKey === 'string' || publicKey instanceof Uint8Array) ?
+            await importPublicKey(publicKey, curve, KeyUse.Encrypt) :
+            publicKey
+    )
 
     const cipherKey = await getSharedKey(privateKey, importedPublicKey, opts)
     return aes.decrypt(msg, cipherKey, opts)
@@ -260,8 +263,12 @@ export default {
     importPublicKey
 }
 
+/**
+ * Transform the incoming key from base64 string or Uint8Array to
+ * a `CryptoKey` instance.
+ */
 export function importPublicKey (
-    base64Key:string|Uint8Array,
+    key:string|Uint8Array,
     curve:EccCurve = DEFAULT_ECC_CURVE,
     use:KeyUse = KeyUse.Sign
 ):Promise<PublicKey> {
@@ -270,9 +277,9 @@ export function importPublicKey (
         ECC_ENCRYPT_ALGORITHM :
         ECC_SIGN_ALGORITHM
     const uses:KeyUsage[] = (use === KeyUse.Encrypt ? [] : ['verify'])
-    const buf = (typeof base64Key === 'string' ?
-        base64ToArrBuf(base64Key) :
-        base64Key)
+    const buf = (typeof key === 'string' ?
+        base64ToArrBuf(key) :
+        key)
 
     return webcrypto.subtle.importKey(
         'raw',
@@ -339,8 +346,7 @@ export async function verifyWithDid (
     try {
         const key = didToPublicKey(did).publicKey
         const imported = await importPublicKey(key)
-        const isOk = await verify(msg, sig, imported)
-        return isOk
+        return (await verify(msg, sig, imported))
     } catch (_err) {
         return false
     }

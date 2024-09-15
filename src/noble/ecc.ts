@@ -4,13 +4,17 @@ import {
     signAsync,
     utils,
 } from '@noble/ed25519'
-import { hkdf } from '@noble/hashes/hkdf'
+// import { hkdf } from '@noble/hashes/hkdf'
+import { sha256 } from '@noble/hashes/sha256'
+// import { sha512 } from '@noble/hashes/sha512'
+import { xchacha20poly1305 } from '@noble/ciphers/chacha'
 import { x25519 } from '@noble/curves/ed25519'
+import { randomBytes } from '@noble/ciphers/webcrypto'
 import * as u from 'uint8arrays'
 import { BASE58_DID_PREFIX } from '../constants.js'
-import { toString, fromString } from '../util'
+import { toString, fromString, generateEntropy } from '../util'
 import { magicBytes, parseMagicBytes } from '../index.js'
-import type { DID, Msg } from '../types'
+import type { DID } from '../types'
 
 export type Keypair = {
     publicKey:Uint8Array;
@@ -18,7 +22,18 @@ export type Keypair = {
 }
 
 /**
- * Create a new keypair.
+ * Generate a secret key, possibly using an existing key buffer.
+ */
+export function x25519Keygen (
+    seed:Uint8Array|string = generateEntropy()
+):Keypair {
+    const sk = sha256(seed)
+    const pk = x25519.scalarMultBase(sk)
+    return { privateKey: sk, publicKey: pk }
+}
+
+/**
+ * Create a new `ed25519` keypair (for signatures).
  */
 export async function create ():Promise<Keypair> {
     const privKey = utils.randomPrivateKey()  // Secure random key
@@ -73,9 +88,9 @@ export async function sign (
     privKey:Uint8Array,
     { format }:{ format: 'string'|'raw' } = { format: 'string' },
 ):Promise<Uint8Array|string> {
-    const msgData:Uint8Array = typeof msg === 'string' ?
+    const msgData:Uint8Array = (typeof msg === 'string' ?
         u.fromString(msg) :
-        msg
+        msg)
 
     const sig = await signAsync(msgData, privKey)
 
@@ -95,17 +110,22 @@ export async function verify (
     sig:string|Uint8Array,
     publicKey:Uint8Array|DID,
 ):Promise<boolean> {
-    const pubBuf = (typeof publicKey === 'string' ?
+    const pubBuf = (typeof publicKey === 'string' ?  // <-- DID format
         (didToPublicKey(publicKey)).publicKey :
         publicKey)
+
+    console.log('sig', sig)
+    console.log('msg', msg)
 
     const sigBuf = typeof sig === 'string' ? fromString(sig) : sig
     const msgBuf = typeof msg === 'string' ? u.fromString(msg) : msg
 
+    console.log('**veryinfying**', sigBuf, msgBuf)
+
     try {
         return (await verifyAsync(sigBuf, msgBuf, pubBuf))
     } catch (_err) {
-        console.log('errrrrrr', _err)
+        console.log('errrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr', _err)
         return false
     }
 }
@@ -145,44 +165,72 @@ export function publicKeyToDid (
 }
 
 export async function encrypt (
-    msg:Msg,
-    privKey:Uint8Array,
-    pubKey:Uint8Array|string,
+    msg:string|Uint8Array,
+    privateKey:Uint8Array,
+    publicKey:Uint8Array|string
+):Promise<string>
+
+export async function encrypt (
+    msg:string|Uint8Array,
+    privateKey:Uint8Array,
+    publicKey:Uint8Array|string,
     opts:{ format:'raw'|'string' } = { format: 'string' }
 ):Promise<Uint8Array|string> {
-    const pubKeyBuf = typeof pubKey === 'string' ? fromString(pubKey) : pubKey
-    const sharedSecret = await getSharedKey(privKey, pubKeyBuf)
+    const pubKeyBuf = (typeof publicKey === 'string' ?
+        fromString(publicKey) :
+        publicKey)
+    const sharedSecret = await getSharedKey(privateKey, pubKeyBuf)
+    const nonce = randomBytes(24)
+    const chacha = xchacha20poly1305(sharedSecret, nonce)
+    const msgBuf = typeof msg === 'string' ? u.fromString(msg) : msg
+    const encrypted = chacha.encrypt(msgBuf)
+    console.log('**encrypted**', encrypted)
+    if (opts.format === 'string') {
+        return toString(new Uint8Array([...nonce, ...encrypted]))
+    }
+
+    return new Uint8Array([...nonce, ...encrypted])
 }
 
-// /**
-//  * Encrypt the given message. Returns a string by default. Pass
-//  * `{ format: 'raw' }` to return a `Uint8Array`.
-//  */
-// export async function encrypt (
-//     msg:Msg,
-//     privateKey:PrivateKey,
-//     publicKey:string|PublicKey,  // <-- base64 or key
-//     { format }:{ format: 'base64'|'raw' } = { format: 'base64' },
-//     charSize:CharSize = DEFAULT_CHAR_SIZE,
-//     curve:EccCurve = DEFAULT_ECC_CURVE,
-//     opts?:Partial<{
-//         alg:SymmAlg
-//         length:SymmKeyLength
-//         iv:ArrayBuffer
-//     }>
-// ):Promise<Uint8Array|string> {
-//     const importedPublicKey = (typeof publicKey === 'string' ?
-//         await importPublicKey(publicKey, curve, KeyUse.Encrypt) :
-//         publicKey)
+export async function decrypt (
+    encryptedData:string|Uint8Array,
+    privateKey:Uint8Array,
+    publicKey:Uint8Array|string,  // Uint8Array or base64
+):Promise<string>
 
-//     const cipherKey = await getSharedKey(privateKey, importedPublicKey, opts)
-//     const encrypted = await aes.encryptBytes(
-//         normalizeUnicodeToBuf(msg, charSize),
-//         cipherKey,
-//         opts
-//     )
+export async function decrypt (
+    encryptedData:string|Uint8Array,
+    privateKey:Uint8Array,
+    publicKey:Uint8Array|string,  // Uint8Array or base64
+    opts:{ format:'raw'| 'string'} = { format: 'string' }
+) {
+    const pubKey = (typeof publicKey === 'string' ?
+        fromString(publicKey) :
+        publicKey)
 
-//     return (format === 'raw' ?
-//         new Uint8Array(encrypted) :
-//         arrBufToBase64(encrypted))
-// }
+    const msgBuf = (typeof encryptedData === 'string' ?
+        fromString(encryptedData) :
+        encryptedData)
+
+    console.log('**msg buf**', msgBuf)
+
+    const sharedSecret = await getSharedKey(privateKey, pubKey)
+
+    console.log('**secret**', sharedSecret)
+
+    // const sharedSecret = hkdf(
+    //     sha256,
+    //     x25519.getSharedSecret(privateKey, pubKey),
+    //     randomBytes(24),
+    //     'example',
+    //     24
+    // )
+
+    // const sharedSecret = hkdf(sha256, privateKey, pubKey, 'example', 24)
+    const nonce = msgBuf.slice(0, 24)
+    const cipher = xchacha20poly1305(sharedSecret, nonce)
+    const cipherBytes = msgBuf.slice(24)  // slice -- 24 -> end
+    const decrypted = cipher.decrypt(cipherBytes)
+
+    return opts.format === 'string' ? u.toString(decrypted) : decrypted
+}

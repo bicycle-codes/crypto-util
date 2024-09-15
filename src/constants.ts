@@ -33,3 +33,6 @@ export const KEY_TYPE = {
     BLS: 'bls12-381'
 } as const
 export const DEFAULT_STRING_ENCODING = 'base64pad'
+
+// noble
+export const IV_BYE_LENGTH = 32
