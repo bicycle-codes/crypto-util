@@ -195,14 +195,23 @@ require('@bicycle-codes/key-utils/module')
 
 ### JS
 ```js
-import '@bicycle-codes/crypto-util'
+import * as util from '@bicycle-codes/crypto-util'
 ```
 
 ### web crypto vs sodium
+
+#### webcrypto
 To use the [webcrypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API), import from the `webcrypto` sub-path.
 
 ```js
 import { aes, ecc, rsa } from '@bicycle-codes/crypto-util/webcrypto'
+```
+
+#### [sodium](https://libsodium.gitbook.io/doc)
+Import from `sodium` sub-path.
+
+```js
+import { ecc } from '@bicycle-codes/crypto-util/sodium'
 ```
 
 ### pre-built JS
