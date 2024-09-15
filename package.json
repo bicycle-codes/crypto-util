@@ -13,15 +13,21 @@
   ],
   "scripts": {
     "lint": "eslint \"./**/*.{ts,js}\"",
-    "test": "npm run lint && bash -c 'cd ./test && npx esbuild --bundle index.ts | node --input-type=module' | tap-spec",
+    "test": "npm run test-webcrypto && npm run test-sodium",
+    "test-webcrypto": "npm run test:node && npm run test:browser",
+    "test-sodium": "npm run test-sodium:node && npm run test-sodium:browser",
+    "test:browser": "npm run build-tests:browser && npm run test-tape-run",
+    "test-sodium:node": "bash -c 'cd ./test && npx esbuild --platform=node --bundle sodium.ts | NODE_ENV=development node' | tap-spec",
+    "test-sodium:browser": "npm run build-tests-sodium:browser && npm run test-tape-run.sodium",
     "test:node": "bash -c 'cd ./test && npx esbuild --format=esm --platform=node --bundle index.ts | node --input-type=module' | tap-spec",
     "build-tests:browser": "esbuild test/index.ts --target=es2020 --bundle --keep-names > test/test-bundle.js",
-    "test:browser": "npm run lint && npm run build && npm run build-tests:browser && npm run test-tape-run",
+    "build-tests-sodium:browser": "esbuild test/sodium.ts --target=es2020 --bundle --keep-names > test/test-bundle.sodium.js",
     "test-tape-run": "cat test/index.html | tape-run --input=html --static=test | tap-spec",
-    "build-cjs": "esbuild src/*.ts --format=cjs --keep-names --tsconfig=tsconfig.build.json --outdir=./dist --out-extension:.js=.cjs --sourcemap",
-    "build-cjs:min": "esbuild src/*.ts --format=cjs --minify --keep-names --tsconfig=tsconfig.build.json --outdir=./dist --out-extension:.js=.min.cjs --sourcemap",
-    "build-esm": "esbuild src/*.ts --format=esm --metafile=dist/meta.json --keep-names --tsconfig=tsconfig.build.json --outdir=./dist --sourcemap && tsc --emitDeclarationOnly --project tsconfig.build.json --outDir dist",
-    "build-esm:min": "esbuild ./src/*.ts --format=esm --keep-names --bundle --tsconfig=tsconfig.build.json --minify --out-extension:.js=.min.js --outdir=./dist --sourcemap",
+    "test-tape-run.sodium": "cat test/index.sodium.html | tape-run --input=html --static=test | tap-spec",
+    "build-cjs": "esbuild src/*.ts src/aes/*.ts src/ecc/*.ts src/rsa/*.ts ./src/sodium/*.ts --format=cjs --keep-names --tsconfig=tsconfig.build.json --outdir=./dist --out-extension:.js=.cjs --sourcemap",
+    "build-cjs:min": "esbuild src/*.ts src/aes/*.ts src/ecc/*.ts src/rsa/*.ts ./src/sodium/*.ts --format=cjs --minify --keep-names --tsconfig=tsconfig.build.json --outdir=./dist --out-extension:.js=.min.cjs --sourcemap",
+    "build-esm": "esbuild src/*.ts src/aes/*.ts src/ecc/*.ts src/rsa/*.ts ./src/sodium/*.ts --format=esm --metafile=dist/meta.json --keep-names --tsconfig=tsconfig.build.json --outdir=./dist --sourcemap && tsc --emitDeclarationOnly --project tsconfig.build.json --outDir dist",
+    "build-esm:min": "esbuild src/*.ts src/aes/*.ts src/ecc/*.ts src/rsa/*.ts ./src/sodium/*.ts --format=esm --keep-names --bundle --tsconfig=tsconfig.build.json --minify --out-extension:.js=.min.js --outdir=./dist --sourcemap",
     "build-docs": "typedoc ./src/index.ts",
     "build": "mkdir -p ./dist && rm -rf ./dist/* && npm run build-cjs && npm run build-esm && npm run build-esm:min && npm run build-cjs:min",
     "preversion": "npm run lint",
@@ -35,17 +41,33 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./aes": {
-      "import": "./dist/aes.js",
-      "require": "./dist/aes.cjs"
+    "./sodium": {
+      "import": "./dist/sodium/index.js",
+      "require": "./dist/sodium/index.cjs"
     },
-    "./rsa": {
-      "import": "./dist/rsa.js",
-      "require": "./dist/rsa.cjs"
+    "./webcrypto": {
+      "import": "./dist/webcrypto.js",
+      "require": "./dist/webcrypto.cjs"
     },
-    "./ecc": {
-      "import": "./dist/ecc.js",
-      "require": "./dist/ecc.cjs"
+    "./sodium/aes": {
+      "import": "./dist/sodium/aes.js",
+      "require": "./dist/sodium/aes.cjs"
+    },
+    "./sodium/ecc": {
+      "import": "./dist/sodium/ecc.js",
+      "require": "./dist/sodium/ecc.cjs"
+    },
+    "./webcrypto/aes": {
+      "import": "./dist/aes/webcrypto.js",
+      "require": "./dist/aes/webcrypto.cjs"
+    },
+    "./webcrypto/rsa": {
+      "import": "./dist/rsa/webcrypto.js",
+      "require": "./dist/rsa/webcrypto.cjs"
+    },
+    "./webcrypto/ecc": {
+      "import": "./dist/ecc/webcrypto.js",
+      "require": "./dist/ecc/webcrypto.cjs"
     },
     "./types": {
       "import": "./dist/types.js",
@@ -64,11 +86,15 @@
   },
   "dependencies": {
     "@bicycle-codes/one-webcrypto": "^1.1.2",
+    "libsodium": "^0.7.15",
+    "libsodium-wrappers": "^0.7.15",
     "uint8arrays": "^5.1.0"
   },
   "devDependencies": {
     "@bicycle-codes/debug": "^0.6.13",
     "@bicycle-codes/tapzero": "^0.10.3",
+    "@types/libsodium-wrappers": "^0.7.14",
+    "@types/node": "^22.5.5",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "auto-changelog": "^2.4.0",

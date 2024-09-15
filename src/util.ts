@@ -1,9 +1,18 @@
-import * as uint8arrays from 'uint8arrays'
+import * as u from 'uint8arrays'
+import type libsodium from 'libsodium-wrappers'
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
-import type { Msg } from './types'
+import type { KeyAlgorithm, Msg, JSONValue, LockKey, DID } from './types'
 import { CharSize } from './types'
 import { InvalidMaxValue } from './errors'
-import { DEFAULT_CHAR_SIZE } from './constants'
+import {
+    DEFAULT_CHAR_SIZE,
+    DEFAULT_ENTROPY_SIZE,
+    RSA_DID_PREFIX,
+    KEY_TYPE,
+    EDWARDS_DID_PREFIX,
+    BLS_DID_PREFIX,
+    BASE58_DID_PREFIX
+} from './constants'
 
 export const normalizeToBuf = (
     msg:Msg,
@@ -69,10 +78,17 @@ export function strToArrBuf (
     return view.buffer
 }
 
+export function generateEntropy (
+    sodium:typeof libsodium,
+    size:number = DEFAULT_ENTROPY_SIZE
+):Uint8Array {
+    return sodium.randombytes_buf(size)
+}
+
 export function randomBuf (
     length:number,
     { max }:{ max:number } = { max: 255 }
-):ArrayBuffer {
+):Uint8Array {
     if (max < 1 || max > 255) {
         throw InvalidMaxValue
     }
@@ -81,7 +97,7 @@ export function randomBuf (
 
     if (max === 255) {
         webcrypto.getRandomValues(arr)
-        return arr.buffer
+        return arr
     }
 
     let index = 0
@@ -97,28 +113,31 @@ export function randomBuf (
         }
     }
 
-    return arr.buffer
+    return arr
 }
 
-export function joinBufs (fst:ArrayBuffer, snd:ArrayBuffer):ArrayBuffer {
+export function joinBufs (
+    fst:ArrayBuffer|Uint8Array,
+    snd:ArrayBuffer|Uint8Array
+):Uint8Array {
     const view1 = new Uint8Array(fst)
     const view2 = new Uint8Array(snd)
     const joined = new Uint8Array(view1.length + view2.length)
     joined.set(view1)
     joined.set(view2, view1.length)
-    return joined.buffer
+    return joined
 }
 
 export function arrBufToBase64 (buf:ArrayBuffer):string {
-    return uint8arrays.toString(new Uint8Array(buf), 'base64pad')
+    return u.toString(new Uint8Array(buf), 'base64pad')
 }
 
 export function toString (arr:Uint8Array) {
-    return uint8arrays.toString(arr, 'base64pad')
+    return u.toString(arr, 'base64pad')
 }
 
 export function base64ToArrBuf (string:string):ArrayBuffer {
-    return uint8arrays.fromString(string, 'base64pad').buffer
+    return u.fromString(string, 'base64pad').buffer
 }
 
 export async function sha256 (bytes:Uint8Array):Promise<Uint8Array> {
@@ -168,5 +187,101 @@ export function publicExponent ():Uint8Array {
  * @returns {Uint8Array}
  */
 export function fromString (str:string) {
-    return uint8arrays.fromString(str, 'base64pad')
+    return u.fromString(str, 'base64pad')
+}
+
+/**
+ * Parse magic bytes on prefixed key-buffer
+ * to determine cryptosystem & the unprefixed key-buffer.
+ */
+export function parseMagicBytes (prefixedKey:ArrayBuffer) {
+    // RSA
+    if (hasPrefix(prefixedKey, RSA_DID_PREFIX)) {
+        return {
+            keyBuffer: prefixedKey.slice(RSA_DID_PREFIX.byteLength),
+            type: KEY_TYPE.RSA
+        }
+    // EDWARDS
+    } else if (hasPrefix(prefixedKey, EDWARDS_DID_PREFIX)) {
+        return {
+            keyBuffer: prefixedKey.slice(EDWARDS_DID_PREFIX.byteLength),
+            type: KEY_TYPE.Edwards
+        }
+    // BLS
+    } else if (hasPrefix(prefixedKey, BLS_DID_PREFIX)) {
+        return {
+            keyBuffer: prefixedKey.slice(BLS_DID_PREFIX.byteLength),
+            type: KEY_TYPE.BLS
+        }
+    }
+
+    throw new Error('Unsupported key algorithm. Try using RSA.')
+}
+
+function hasPrefix (prefixedKey:ArrayBuffer, prefix:ArrayBuffer) {
+    return arrBufsEqual(prefix, prefixedKey.slice(0, prefix.byteLength))
+}
+
+function arrBufsEqual (aBuf:ArrayBuffer, bBuf:ArrayBuffer):boolean {
+    const a = new Uint8Array(aBuf)
+    const b = new Uint8Array(bBuf)
+    if (a.length !== b.length) return false
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false
+    }
+    return true
+}
+
+export function asBufferOrString (
+    data:Uint8Array|ArrayBuffer|string|JSONValue
+):Uint8Array|string {
+    if (data instanceof ArrayBuffer) {
+        return new Uint8Array(data)
+    }
+
+    if (isByteArray(data)) {
+        return (data as Uint8Array)
+    }
+
+    if (typeof data === 'object') {
+        // assume JSON serializable
+        return JSON.stringify(data)
+    }
+
+    // data must be a string
+    return String(data)
+}
+
+export function isByteArray (val:unknown):boolean {
+    return (val instanceof Uint8Array && val.buffer instanceof ArrayBuffer)
+}
+
+export function stringify (keys:LockKey):string {
+    return toString(keys.publicKey)
+    // => 'welOX9O96R6WH0S8cqqwMlPAJ3VwMgAZEnc1wa1MN70='
+}
+
+export const magicBytes:Record<KeyAlgorithm, Uint8Array> = {
+    'bls12-381': new Uint8Array([0xea, 0x01]),
+    ed25519: new Uint8Array([0xed, 0x01]),
+    rsa: new Uint8Array([0x00, 0xf5, 0x02]),
+}
+
+export function didToPublicKey (did:DID):({
+    publicKey:Uint8Array,
+    type:'rsa'|'ed25519'|'bls12-381'
+}) {
+    if (!did.startsWith(BASE58_DID_PREFIX)) {
+        throw new Error(
+            'Please use a base58-encoded DID formatted `did:key:z...`')
+    }
+
+    const didWithoutPrefix = ('' + did.substring(BASE58_DID_PREFIX.length))
+    const magicalBuf = u.fromString(didWithoutPrefix, 'base58btc')
+    const { keyBuffer, type } = parseMagicBytes(magicalBuf.buffer)
+
+    return {
+        publicKey: new Uint8Array(keyBuffer),
+        type
+    }
 }

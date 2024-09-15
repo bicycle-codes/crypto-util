@@ -1,7 +1,7 @@
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
 import { fromString, toString } from 'uint8arrays'
 import * as uint8arrays from 'uint8arrays'
-import { magicBytes, parseMagicBytes } from './index.js'
+import { magicBytes, parseMagicBytes } from '../index.js'
 import {
     BASE58_DID_PREFIX,
     DEFAULT_CHAR_SIZE,
@@ -12,9 +12,9 @@ import {
     RSA_HASHING_ALGORITHM,
     DEFAULT_RSA_SIZE,
     DEFAULT_STRING_ENCODING
-} from './constants'
-import { checkValidKeyUse } from './errors'
-import { importKey as importAesKey } from './aes'
+} from '../constants'
+import { checkValidKeyUse } from '../errors'
+import { importKey as importAesKey } from '../aes/webcrypto.js'
 import {
     base64ToArrBuf,
     normalizeBase64ToBuf,
@@ -22,9 +22,9 @@ import {
     isCryptoKey,
     publicExponent,
     arrBufToBase64,
-} from './util'
-import { KeyUse } from './types'
-import type { RsaSize, Msg, CharSize, HashAlg, DID, PublicKey } from './types'
+} from '../util'
+import { KeyUse } from '../types'
+import type { RsaSize, Msg, CharSize, HashAlg, DID, PublicKey } from '../types'
 
 export async function verify (
     msg:Msg,
@@ -149,11 +149,6 @@ export async function importPublicKey (
         hash: { name: hashAlg }
     }, true, uses)
 }
-
-// export async function exportKey (
-//     keys:CryptoKeyPair,
-//     { format }?:{ format:'raw' }
-// ):Promise<string>
 
 export async function exportKey (
     key:PublicKey

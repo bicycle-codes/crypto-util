@@ -4,7 +4,7 @@ import {
     DEFAULT_CTR_LEN,
     DEFAULT_SYMM_LEN,
     DEFAULT_CHAR_SIZE,
-} from './constants.js'
+} from '../constants.js'
 import {
     CharSize,
     type CipherText,
@@ -13,7 +13,7 @@ import {
     type SymmKeyLength,
     type SymmKeyOpts,
     type SymmAlg
-} from './types.js'
+} from '../types.js'
 import {
     randomBuf,
     normalizeUtf16ToBuf,
@@ -23,7 +23,7 @@ import {
     arrBufToStr,
     base64ToArrBuf,
     normalizeUtf8ToBuf
-} from './util.js'
+} from '../util.js'
 
 export async function encryptBytes (
     msg:Msg,

@@ -46,13 +46,12 @@ npm i -S @bicycle-codes/crypto-util
 --------------------------------------------------------------
 
 ### Create a new keypair
-
 Use ECC keys with the [web crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API).
 
 Also, you can use [RSA keys](./test/index.ts#L62).
 
 ```js
-import { create } from '@bicycle-codes/crypto-util'
+import { create, KeyUse } from '@bicycle-codes/crypto-util'
 
 // create a new keypair
 const encryptKeypair = await create(KeyUse.Encrypt)
@@ -183,19 +182,12 @@ This exposes ESM and common JS via [package.json `exports` field](https://nodejs
 
 ### ESM
 ```js
-import '@bicycle-codes/key-utils'
+import * as util from '@bicycle-codes/crypto-utils'
 ```
 
 ### Common JS
 ```js
-require('@bicycle-codes/key-utils/module')
-```
-
-## use
-
-### JS
-```js
-import '@bicycle-codes/crypto-util'
+const util = require('@bicycle-codes/crypto-utils')
 ```
 
 ### pre-built JS
@@ -204,10 +196,411 @@ that is accessible to your web server, then link in HTML.
 
 #### copy
 ```sh
-cp ./node_modules/@namespace/package/dist/index.min.js ./public/crypto-util
+cp ./node_modules/@bicycle-codes/crypto-util/dist/index.min.js ./public/crypto-util.js
 ```
 
 #### HTML
 ```html
-<script type="module" src="./crypto-util.min.js"></script>
+<script type="module" src="./crypto-util.js"></script>
+```
+
+### webcrypto vs sodium
+
+To use the [webcrypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API), import from the `webcrypto` sub-path.
+
+
+-----------------------------------------------------------
+## webcrypto API
+-----------------------------------------------------------
+This depends on an environment with a [webcrypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API).
+
+```js
+import { aes, ecc, rsa } from '@bicycle-codes/crypto-util/webcrypto'
+```
+
+### example
+```js
+import { rsa, ecc, aes } from '@bicycle-codes/crypto-util/webcrypto'
+
+// create some ECC keypairs
+const eccKeypair = await ecc.create(KeyUse.Sign)
+const eccSignKeys = await ecc.create(KeyUse.Encrypt)
+
+// get the public key as a string
+const publicKey = await ecc.exportPublicKey(eccSignKeys.publicKey)
+
+// get the public key as a DID format string
+const did = await ecc.publicKeyToDid(eccSignKeys.publicKey)
+
+// transform a DID string to a public key instance
+const publicKey = ecc.didToPublicKey(eccDid)
+```
+
+### `sign`
+```ts
+async function sign (
+    msg:Msg,  // <-- string or Uint8Array
+    privateKey:PrivateKey,
+    { format }:{ format: 'base64'|'raw' } = { format: 'base64' },
+    charSize:CharSize = DEFAULT_CHAR_SIZE,
+    hashAlg:HashAlg = DEFAULT_HASH_ALGORITHM,
+):Promise<ArrayBuffer|string>
+```
+
+#### example
+
+```js
+import { sign } from '@bicycle-codes/crypto-util/webcrypto/ecc'
+const sig = await sign('hello webcrypto', eccSignKeys.privateKey)
+```
+
+### `verifyWithDid`
+Verify a signature with a DID format string.
+
+```ts
+async function verifyWithDid (
+    msg:string,
+    sig:string,
+    did:DID
+):Promise<boolean>
+```
+
+```js
+import { verifyWithDid } from '@bicycle-codes/crypto-util/webcrypto/ecc'
+
+const isOk = await verifyWithDid('hello dids', sig, did)
+```
+
+### `getSharedKey`
+Get a shared key given two existing keypairs.
+
+```ts
+async function getSharedKey (
+    privateKey:PrivateKey,
+    publicKey:PublicKey,
+    opts?:Partial<{
+        alg:'AES-GCM'|'AES-CBC'|'AES-CTR'
+        length:SymmKeyLength
+        iv:ArrayBuffer
+    }>
+):Promise<SymmKey>
+```
+
+```js
+let BobsKeys:CryptoKeyPair
+let sharedKey:CryptoKey
+
+const BobsKeys = await createEcc(KeyUse.Encrypt)
+const sharedKey = await getSharedKey(eccKeypair.privateKey, BobsKeys.publicKey)
+t.ok(sharedKey instanceof CryptoKey, 'should return a `CryptoKey`')
+```
+
+### `encrypt`
+Encrypt something with your private key and the recipient's public key.
+
+```ts
+async function encrypt (
+    msg:Msg,  // <-- string or Uint8Array
+    privateKey:PrivateKey,
+    publicKey:string|PublicKey,  // <-- base64 or key
+    { format }:{ format: 'base64'|'raw' } = { format: 'base64' },
+    charSize:CharSize = DEFAULT_CHAR_SIZE,
+    curve:EccCurve = DEFAULT_ECC_CURVE,
+    opts?:Partial<{
+        alg:SymmAlg
+        length:SymmKeyLength
+        iv:ArrayBuffer
+    }>
+):Promise<Uint8Array|string>
+```
+
+#### example
+
+```js
+const eccEncryptedText = await ecc.encrypt(
+    'hello ecc',
+    alicesKeys.privateKey,
+    BobsKeys.publicKey
+)
+```
+
+### `decrypt`
+Decrypt some text that was encrypted with `ecc.ecncrypt`.
+
+```ts
+async function decrypt (
+    msg:Msg,  // <-- string or Uint8Array
+    privateKey:PrivateKey,
+    publicKey:string|PublicKey,
+    curve:EccCurve = DEFAULT_ECC_CURVE,
+    opts?:Partial<{
+        alg:'AES-GCM'|'AES-CBC'|'AES-CTR'
+        length:SymmKeyLength
+        iv:ArrayBuffer
+    }>
+):Promise<string>
+```
+
+#### example
+Note the keys a swapped here -- the public and private keys can come from either
+keypair and it still works.
+
+```js
+const decrypted = await ecc.decrypt(
+    eccEncryptedText,
+    BobsKeys.privateKey,
+    alicesKeys.publicKey
+)
+```
+
+-----------------------------------------------------------
+## sodium API
+-----------------------------------------------------------
+These should work anywhere that JS can run.
+
+```js
+import { aes, ecc, rsa } from '@bicycle-codes/crypto-util/sodium'
+```
+
+Or import individual modules
+```js
+import * as aes from '@bicycle-codes/crypto-util/sodium/aes'
+import * as ecc from '@bicycle-codes/crypto-util/sodium/ecc'
+import * as webcryptoAes from '@bicycle-codes/crypto-util/webcrypto/aes'
+```
+
+-----------------------------------------------------------
+## Sodium AES
+-----------------------------------------------------------
+Encrypt with [AEGIS-256](https://libsodium.gitbook.io/doc/secret-key_cryptography/aead/aegis-256) (symmetric crypto).
+
+
+### Sodium + AES example
+```js
+import {
+    create,
+    encrypt,
+    decrypt
+} from '@bicycle-codes/crypto-util/sodium/aes'
+
+// create a new key
+const key = await create()
+
+// or create a key, return a Uint8Array
+const keyAsBuffer = await createAes({ format: 'raw' })
+
+// encrypt something
+const encryptedString = await encrypt('hello sodium + AES', key)
+```
+
+### `aes.create`
+Create a new AES key. Pass `{ format: 'raw' }` to return a `Uint8Array`.
+
+```ts
+async function create (opts:{
+    format: 'string'|'raw'
+} = { format: 'string' }):Promise<Uint8Array|string>
+```
+
+#### example
+```js
+import { create } from '@bicycle-codes/crypto-util/sodium/aes'
+
+const aesKey = await create()
+```
+
+### `aes.encrypt`
+Encrypt the given string or buffer. Pass `{ format: 'raw' }` to return a `Uint8Array`.
+
+```ts
+async function encrypt (
+    msg:Uint8Array|string,
+    key:Uint8Array|string,
+    opts:Partial<{
+        iv?:Uint8Array
+        format?:'string'|'raw'
+    }> = { format: 'string' },
+):Promise<Uint8Array|string>
+```
+
+#### example
+```js
+import { encrypt } from '@bicycle-codes/crypto-util/sodium/aes'
+
+const encryptedString = await encryptAes('hello sodium + AES', aesKey)
+```
+
+### `aes.decrypt`
+Decrypt the given string or buffer. Pass `{ format: 'raw' }` to return a `Uint8Array`.
+
+```ts
+async function decrypt (
+    cipherText:string|Uint8Array,
+    key:string|Uint8Array,
+    opts:{ format:'string'|'raw' } = { format: 'string' }
+):Promise<Uint8Array|string>
+```
+
+#### example
+
+```ts
+import { decrypt } from '@bicycle-codes/sodium/aes'
+
+const decrypted = await decrypt(encryptedAes, aesKey)
+// => "hello sodium + AES"
+```
+
+-----------------------------------------------------------
+## Sodium ECC
+-----------------------------------------------------------
+
+### Sodium + ECC example
+```js
+import * as ecc from '@bicycle-codes/crypto-util/sodium/ecc'
+
+const keys = await ecc.create()
+```
+
+### `ecc.create`
+
+Create a new Edward keypair.
+```ts
+async function create (
+    use:KeyUse,
+    curve:EccCurve = EccCurve.P_256,
+):Promise<CryptoKeyPair>
+```
+
+#### `.create` example
+
+```js
+import { create } from '@bicycle-codes/crypto-util/sodium/ecc'
+
+const keys = await create()
+```
+
+### `ecc.sign`
+Create a signature for the diven data. Pass `{ format: 'raw' }` to get a `Uint8Array` instead of a string.
+
+```ts
+async function sign (
+    data:string|Uint8Array,
+    key:LockKey,
+    opts:{
+        format:'string'|'raw'
+    } = { format: 'string' }
+):Promise<string|Uint8Array>
+```
+
+#### `ecc.sign` example
+```js
+import { sign } from '@bicycle-codes/crypto-util/webcrypto/ecc'
+
+const sig = await sign('hello webcrypto', alicesKeys, { format: 'raw' })
+```
+
+### `ecc.publicKeyToDid`
+Take a public key instance and return a DID format string.
+
+```ts
+async function publicKeyToDid (
+    publicKey:Uint8Array|PublicKey
+):Promise<DID>
+```
+
+#### `ecc.publicKeyToDid` example
+
+```js
+import {
+  exportPublicKey,
+  publicKeyToDid
+} from '@bicycle-codes/crypto-util/webcrypto/ecc'
+
+const arr = await exportPublicKey(eccSignKeys.publicKey)
+const did = await publicKeyToDid(arr)
+```
+
+### `ecc.verify`
+Verify the given signature + public key + message data.
+
+```ts
+async function verify (
+    msg:Msg,  // <-- string or Uint8Array
+    sig:string|Uint8Array|ArrayBuffer,
+    publicKey:string|PublicKey,
+    charSize:CharSize = DEFAULT_CHAR_SIZE,
+    curve:EccCurve = DEFAULT_ECC_CURVE,
+    hashAlg: HashAlg = DEFAULT_HASH_ALGORITHM
+):Promise<boolean>
+```
+
+#### `ecc.verify` example
+```js
+const key = await importDid(eccDid)
+const isOk = await verify('hello webcrypto', sig, key)
+t.ok(isOk, 'should verify a valid signature')
+```
+
+### `ecc.verifyWithDid`
+Verify the given signature + message + public key are ok together, using the given DID string as public key material.
+
+```ts
+async function verifyWithDid (
+    msg:string,
+    sig:string,
+    did:DID
+):Promise<boolean>
+```
+
+#### `ecc.verifyWithDid` example
+
+```js
+import { verifyWithDid } from '@bicycle-codes/crypto-util/webcrypto/ecc'
+
+const isOk = await verifyWithDid('hello dids', sig, did)
+```
+
+### `ecc.encrypt`
+
+Use the given private and public keys to create a shared key, then encrypt the message with the key.
+
+```ts
+async function encrypt (
+    msg:Msg,
+    privateKey:PrivateKey,
+    publicKey:string|PublicKey,  // <-- base64 or key
+    { format }:{ format: 'base64'|'raw' } = { format: 'base64' },
+    charSize:CharSize = DEFAULT_CHAR_SIZE,
+    curve:EccCurve = DEFAULT_ECC_CURVE,
+    opts?:Partial<{
+        alg:SymmAlg
+        length:SymmKeyLength
+        iv:ArrayBuffer
+    }>
+):Promise<Uint8Array|string>
+```
+
+#### `ecc.encrypt example`
+
+```js
+import { encrypt } from '@bicycle-codes/crypto-util/webcrypto/ecc'
+
+const eccEncryptedText = await encrypt(
+    'hello ecc',
+    AlicesKeys.privateKey,
+    BobsKeys.publicKey
+)
+```
+
+### `ecc.decrypt`
+Decrypt a message given a public and private key. Note in the example, the keypairs are reversed from the `encrypt` example. This creates a new shared key via [Diffie Hellman](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey#key_agreement_algorithms).
+
+```js
+import { decrypt } from '@bicycle-codes/crypto-util/webcrypto/ecc'
+
+const decrypted = await decrypt(
+    eccEncryptedText,
+    BobsKeys.privateKey,
+    AlicesKeys.publicKey
+)
 ```
