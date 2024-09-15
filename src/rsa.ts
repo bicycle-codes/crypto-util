@@ -150,11 +150,6 @@ export async function importPublicKey (
     }, true, uses)
 }
 
-// export async function exportKey (
-//     keys:CryptoKeyPair,
-//     { format }?:{ format:'raw' }
-// ):Promise<string>
-
 export async function exportKey (
     key:PublicKey
 ):Promise<Uint8Array>

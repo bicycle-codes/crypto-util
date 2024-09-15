@@ -6,7 +6,8 @@ import {
     verify,
     stringify,
     encrypt,
-    decrypt
+    decrypt,
+    importPublicKey
 } from '../src/sodium/ecc'
 import type { LockKey } from '../src'
 // import Debug from '@bicycle-codes/debug/node'
@@ -45,6 +46,11 @@ let keyString:string
 test('serialize the public key', (t) => {
     keyString = stringify(alicesKeys)
     t.equal(typeof keyString, 'string', 'should return a string')
+})
+
+test('deserialize the public key', t => {
+    const key = importPublicKey(keyString)
+    t.ok(key instanceof Uint8Array)
 })
 
 test('verify a signature given a string public key', async (t) => {

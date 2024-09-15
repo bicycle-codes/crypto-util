@@ -15,6 +15,10 @@ export { stringify }
 
 const CURRENT_LOCK_KEY_FORMAT_VERSION = 1
 
+export function importPublicKey (key:string):Uint8Array {
+    return fromString(key)
+}
+
 /**
  * Create a new keypair.
  */
