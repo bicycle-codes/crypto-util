@@ -85,7 +85,7 @@ export async function encrypt (
     msg:Msg,
     key:SymmKey|string,
     opts?:Partial<SymmKeyOpts>
-): Promise<string> {
+):Promise<string> {
     const cipherText = await encryptBytes(msg, key, opts)
     return arrBufToBase64(cipherText)
 }
@@ -137,7 +137,7 @@ export async function importKey (
 export function create (opts:{ alg, length } = {
     alg: DEFAULT_SYMM_ALGORITHM,
     length: DEFAULT_SYMM_LEN
-}) {
+}):Promise<CryptoKey> {
     return webcrypto.subtle.generateKey({
         name: opts.alg,
         length: opts.length

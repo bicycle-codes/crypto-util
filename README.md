@@ -106,7 +106,7 @@ Bob can derive the same key by using their private key + Alice's public key.
 const bobsSharedKey = await getSharedKey(bobsKeys.privateKey, alicesKeys.publicKey)
 ```
 
-### Encrypt a message with an AES key
+### Encrypt with AES keys
 Encrypt a given message with a given key.
 
 ```js
@@ -264,6 +264,87 @@ const did = await ecc.publicKeyToDid(eccSignKeys.publicKey)
 const publicKey = ecc.didToPublicKey(eccDid)
 ```
 
+-----------------------------------------------------------
+## webcrypto AES API
+-----------------------------------------------------------
+### `aes.create`
+Create a new AES-GCM key.
+
+```ts
+function create (opts:{ alg, length } = {
+    alg: DEFAULT_SYMM_ALGORITHM,
+    length: DEFAULT_SYMM_LEN
+}):Promise<CryptoKey>
+```
+
+#### `aes.create` example
+
+```js
+import { create } from '@bicycle-codes/crypto-util/webcrypto/aes'
+
+const aesKey = await createAes()
+```
+
+### `aes.encrypt`
+Encrypt a string.
+
+```ts
+async function encrypt (
+    msg:Msg,
+    key:SymmKey|string,
+    opts?:Partial<SymmKeyOpts>
+):Promise<string>
+```
+
+```js
+import { encrypt } from '@bicycle-codes/crypto-util/webcrypto/aes'
+
+let aesEncryptedText:string
+test('encrypt some text with AES', async t => {
+    aesEncryptedText = await encrypt('hello AES', aesKey)
+    // returns a string by default
+})
+```
+
+### `aes.decrypt`
+```ts
+async function decrypt (
+    msg:Msg,
+    key:SymmKey|string,
+    opts?:Partial<SymmKeyOpts>,
+    charSize:CharSize = DEFAULT_CHAR_SIZE
+):Promise<string>
+```
+
+```js
+import { decrypt } from '@bicycle-codes/crypto-util/webcrypto/aes'
+
+const decrypted = await decrypt(aesEncryptedText, aesKey)
+// => 'hello AES'
+```
+
+-----------------------------------------------------------
+## webcrypto ECC API
+-----------------------------------------------------------
+
+### `ecc.create`
+```ts
+async function create (
+    use:KeyUse,
+    curve:EccCurve = EccCurve.P_256,
+):Promise<CryptoKeyPair>
+```
+
+#### `create` example
+
+```js
+import { create } from '@bicycle-codes/crypto-util/webcrypto/ecc'
+
+const alicesEncryptionKeys = await createEcc(KeyUse.Encrypt)
+const alicesSigningKeys = await createEcc(KeyUse.Sign)
+```
+
+
 ### `sign`
 ```ts
 async function sign (
@@ -279,6 +360,7 @@ async function sign (
 
 ```js
 import { sign } from '@bicycle-codes/crypto-util/webcrypto/ecc'
+
 const sig = await sign('hello webcrypto', eccSignKeys.privateKey)
 ```
 
@@ -398,7 +480,7 @@ import * as webcryptoAes from '@bicycle-codes/crypto-util/webcrypto/aes'
 ```
 
 -----------------------------------------------------------
-## Sodium AES
+## Sodium AES API
 -----------------------------------------------------------
 Encrypt with [AEGIS-256](https://libsodium.gitbook.io/doc/secret-key_cryptography/aead/aegis-256) (symmetric crypto).
 
@@ -479,7 +561,7 @@ const decrypted = await decrypt(encryptedAes, aesKey)
 ```
 
 -----------------------------------------------------------
-## Sodium ECC
+## Sodium ECC API
 -----------------------------------------------------------
 
 ### Sodium + ECC example
