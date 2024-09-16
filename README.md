@@ -337,6 +337,12 @@ const decrypted = await decrypt(aesEncryptedText, aesKey)
 ```
 
 -----------------------------------------------------------
+## webcrypto RSA API
+-----------------------------------------------------------
+We expose RSA because not all browser yet support ECC keys. See [src/rsa/webcrypto.ts](./src/rsa/webcrypto.ts) and [test/index.ts](test/index.ts#L60).
+
+
+-----------------------------------------------------------
 ## webcrypto ECC API
 -----------------------------------------------------------
 
