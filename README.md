@@ -48,6 +48,7 @@ The install size is kind of large (9.77 MB) because this includes a minified bun
   * [`aes.create`](#aescreate)
   * [`aes.encrypt`](#aesencrypt)
   * [`aes.decrypt`](#aesdecrypt)
+- [webcrypto RSA API](#webcrypto-rsa-api)
 - [webcrypto ECC API](#webcrypto-ecc-api)
   * [`ecc.create`](#ecccreate)
   * [`sign`](#sign)
