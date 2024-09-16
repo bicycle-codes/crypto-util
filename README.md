@@ -28,6 +28,8 @@ The install size is kind of large (9.77 MB) because this includes a minified bun
 
 __Plus, [See the docs generated from typescript](https://bicycle-codes.github.io/crypto-util/)__
 
+------------------------------------------
+
 ## Contents
 
 <!-- toc -->
