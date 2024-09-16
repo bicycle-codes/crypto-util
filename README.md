@@ -8,7 +8,7 @@
 
 Utility functions for working with crypto keys in the browser or node.
 
-This is some helpful functions that make it easier to work with cryptography. Note this does *not* deal with storing keys. Look at using [@bicycle-codes/webauthn-keys](https://github.com/bicycle-codes/webauthn-keys/) (biometric authentication) or `indexedDB` for help with that.
+This is some helpful functions that make it easier to work with cryptography. Note this does *not* deal with storing keys. Look at using [@bicycle-codes/webauthn-keys](https://github.com/bicycle-codes/webauthn-keys/) (biometric authentication) or [indexedDB](https://github.com/jakearchibald/idb-keyval) for help with that.
 
 This includes both [sodium](https://github.com/jedisct1/libsodium.js) based keys and also [webcrypto](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) functions.
 
