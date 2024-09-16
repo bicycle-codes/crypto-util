@@ -8,10 +8,12 @@
 
 Utility functions for working with crypto keys in the browser or node.
 
-This is some helpful functions that make it easier to work with cryptography. Note this does *not* deal with storing keys. Look at [@bicycle-codes/webauthn-keys](https://github.com/bicycle-codes/webauthn-keys/) (biometric authentication), or using `indexedDB` for help with that.
+This is some helpful functions that make it easier to work with cryptography. Note this does *not* deal with storing keys. Look at using [@bicycle-codes/webauthn-keys](https://github.com/bicycle-codes/webauthn-keys/) (biometric authentication) or `indexedDB` for help with that.
 
 > [!TIP]
 > Request "persistent" storage with the [`.persist()`](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist) method in the browser.
+
+The install size is kind of large (9.77 MB) because this includes a minified bundle of the [sodium library](https://github.com/jedisct1/libsodium.js).
 
 > [!TIP]
 > [See the docs generated from typescript](https://bicycle-codes.github.io/crypto-util/)
@@ -724,3 +726,4 @@ const decrypted = await decrypt(
   - [AEGIS-256](https://libsodium.gitbook.io/doc/secret-key_cryptography/aead/aegis-256)
 * [Web Crypto API -- MDN docs](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API)
 * [StorageManager: persist() method](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist)
+* [idb-keyval](https://github.com/jakearchibald/idb-keyval) -- super simple key value storage API built on `indexedDB`.
