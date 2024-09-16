@@ -20,7 +20,11 @@ The Webcrypto keys are preferable because we create them as
 > Request "persistent" storage with the [`.persist()`](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist) method in the browser.
 >
 
+------------------------------------------
+
 The install size is kind of large (9.77 MB) because this includes a minified bundle of the [sodium library](https://github.com/jedisct1/libsodium.js).
+
+------------------------------------------
 
 __Plus, [See the docs generated from typescript](https://bicycle-codes.github.io/crypto-util/)__
 
@@ -105,7 +109,7 @@ const signKeys = await create(KeyUse.Sign)
 This requires a keypair + another keypair to derive a shared AES key.
 
 ```js
-import { getSharedKey } from '@bicycle-codes/crypto-util/ecc'
+import { getSharedKey } from '@bicycle-codes/crypto-util/webcrypto/ecc'
 import { KeyUse } from '@bicycle-codes/crypto-util/types'
 
 const alicesKeys = await createEcc(KeyUse.Encrypt)
@@ -125,7 +129,7 @@ const bobsSharedKey = await getSharedKey(bobsKeys.privateKey, alicesKeys.publicK
 Encrypt a given message with a given key.
 
 ```js
-import { create, encrypt } from '@bicycle-codes/crypto-util/aes'
+import { create, encrypt } from '@bicycle-codes/crypto-util/webcrypto/aes'
 
 const aesKey = await create()
 const aesEncryptedText = await encrypt('hello AES', aesKey)
@@ -134,7 +138,7 @@ const aesEncryptedText = await encrypt('hello AES', aesKey)
 ### Decrypt with AES keys
 
 ```js
-import { decrypt } from '@bicycle-codes/crypto-util/aes'
+import { decrypt } from '@bicycle-codes/crypto-util/webcrypto/aes'
 
 const decrypted = await decrypt(aesEncryptedText, aesKey)
 ```
@@ -144,12 +148,12 @@ This is a message from Alice to Bob. We use Alice's private key & Bob's
 public key.
 
 ```js
+import { KeyUse } from '@bicycle-codes/crypto-util'
 import {
-  KeyUse,
-  create,
-  encrypt,
-  decrypt
-} from '@bicycle-codes/crypto-util'
+    create,
+    encrypt,
+    decrypt
+} from '@bicycle-codes/crypto-util/webcrypto'
 
 const alicesKeys = await create(KeyUse.Encrypt)
 const bobsKeys = await create(KeyUse.Encrypt)
@@ -176,19 +180,20 @@ const decrypted = await decrypt(
 // => 'hello ecc'
 ```
 
-### Sign things
+### Create a signing keypair
 Create another keypair that is used for signatures.
 
 ```js
 import { KeyUse } from '@bicycle-codes/crypto-util'
+import { create } from '@bicycle-codes/crypto-util/webcrypto'
 
-const eccSignKeys = await createEcc(KeyUse.Sign)
+const eccSignKeys = await create(KeyUse.Sign)
 ```
 
 #### Create signatures
 
 ```js
-import { sign } from '@bicycle-codes/crypto-util/ecc'
+import { sign } from '@bicycle-codes/crypto-util/webcrypto/ecc'
 
 const sig = await sign('hello dids', eccSignKeys.privateKey)
 ```
