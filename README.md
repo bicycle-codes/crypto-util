@@ -20,8 +20,7 @@ The Webcrypto keys are preferable because we create them as
 
 The install size is kind of large (9.77 MB) because this includes a minified bundle of the [sodium library](https://github.com/jedisct1/libsodium.js).
 
-> [!TIP]
-> [See the docs generated from typescript](https://bicycle-codes.github.io/crypto-util/)
+Plus, [See the docs generated from typescript](https://bicycle-codes.github.io/crypto-util/)
 
 ## Contents
 
