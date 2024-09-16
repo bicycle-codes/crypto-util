@@ -13,7 +13,7 @@ This is some helpful functions that make it easier to work with cryptography. No
 This includes both [sodium](https://github.com/jedisct1/libsodium.js) based keys and also [webcrypto](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) functions.
 
 The Webcrypto keys are preferable because we create them as
-[non-extractable](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable) keys, and are able to persist them in indexedDB, despite not being able to read the private key.
+[non-extractable](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/generateKey#extractable) keys, and are able to persist them in indexedDB, despite not being able to read the private key.
 
 > [!TIP]
 > Request "persistent" storage with the [`.persist()`](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist) method in the browser.
