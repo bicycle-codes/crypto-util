@@ -97,7 +97,7 @@ npm i -S @bicycle-codes/crypto-util
 ### Create a new keypair
 Use ECC keys with the [web crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API).
 
-Also, you can use [RSA keys](./test/index.ts#L62).
+Also, you can use [RSA keys](https://github.com/bicycle-codes/crypto-util/blob/main/test/index.ts#L61).
 
 ```js
 import { create, KeyUse } from '@bicycle-codes/crypto-util'
