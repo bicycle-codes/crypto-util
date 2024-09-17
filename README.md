@@ -42,7 +42,7 @@ __Plus, [See the docs generated from typescript](https://bicycle-codes.github.io
   * [Decrypt with AES keys](#decrypt-with-aes-keys)
   * [encrypt with ECC keys](#encrypt-with-ecc-keys)
   * [Decrypt with ECC keys](#decrypt-with-ecc-keys)
-  * [Sign things](#sign-things)
+  * [Create a signing keypair](#create-a-signing-keypair)
   * [Verify a signature](#verify-a-signature)
 - [API](#api)
   * [ESM](#esm)
