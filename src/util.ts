@@ -132,6 +132,12 @@ export function arrBufToBase64 (buf:ArrayBuffer):string {
     return u.toString(new Uint8Array(buf), 'base64pad')
 }
 
+/**
+ * Convert Uint8Arrays to `base64pad` encoded strings.
+ *
+ * @param arr Input `Uint8Array`
+ * @returns `base64pad` encoded string
+ */
 export function toString (arr:Uint8Array) {
     return u.toString(arr, 'base64pad')
 }
