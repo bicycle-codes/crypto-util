@@ -15,6 +15,7 @@
     "lint": "eslint \"./**/*.{ts,js}\"",
     "test": "npm run test-webcrypto && npm run test-sodium",
     "test-webcrypto": "npm run test:node && npm run test:browser",
+    "test-noble": "npx esbuild --platform=node --format=esm --bundle test/noble.ts | node --input-type=module | tap-spec",
     "test-sodium": "npm run test-sodium:node && npm run test-sodium:browser",
     "test:browser": "npm run build-tests:browser && npm run test-tape-run",
     "test-sodium:node": "bash -c 'cd ./test && npx esbuild --platform=node --bundle sodium.ts | NODE_ENV=development node' | tap-spec",
@@ -85,6 +86,9 @@
   },
   "dependencies": {
     "@bicycle-codes/one-webcrypto": "^1.1.2",
+    "@noble/ciphers": "^1.0.0",
+    "@noble/curves": "^1.6.0",
+    "@noble/hashes": "^1.5.0",
     "libsodium": "^0.7.15",
     "libsodium-wrappers": "^0.7.15",
     "uint8arrays": "^5.1.0"
