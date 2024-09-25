@@ -6,7 +6,7 @@
     "test": "test"
   },
   "type": "module",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "main": "dist/index.js",
   "files": [
     "./dist/*"
