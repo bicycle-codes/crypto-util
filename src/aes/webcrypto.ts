@@ -22,7 +22,7 @@ import {
     arrBufToBase64,
     arrBufToStr,
     base64ToArrBuf,
-    normalizeUtf8ToBuf
+    normalizeUtf8ToBuf,
 } from '../util.js'
 
 export async function encryptBytes (
@@ -58,12 +58,20 @@ export async function encryptBytes (
 }
 
 export async function decryptBytes (
-    msg: Msg,
-    key: SymmKey | string,
-    opts?: Partial<SymmKeyOpts>
+    msg:Msg,
+    key:SymmKey|string|Uint8Array,
+    opts?:Partial<SymmKeyOpts>
 ):Promise<ArrayBuffer> {
     const cipherText = normalizeBase64ToBuf(msg)
-    const importedKey = typeof key === 'string' ? await importKey(key, opts) : key
+    let importedKey:CryptoKey
+    if (typeof key === 'string') {
+        importedKey = await importKey(key, opts)
+    } else if (key instanceof Uint8Array) {
+        importedKey = await importKey(key, opts)
+    } else {
+        importedKey = key
+    }
+
     const alg = opts?.alg || DEFAULT_SYMM_ALGORITHM
     const iv = cipherText.slice(0, 12)
     const cipherBytes = cipherText.slice(12)
@@ -78,6 +86,7 @@ export async function decryptBytes (
         importedKey,
         cipherBytes
     )
+
     return msgBuff
 }
 
@@ -92,7 +101,7 @@ export async function encrypt (
 
 export async function decrypt (
     msg:Msg,
-    key:SymmKey|string,
+    key:SymmKey|string|Uint8Array,
     opts?:Partial<SymmKeyOpts>,
     charSize:CharSize = DEFAULT_CHAR_SIZE
 ):Promise<string> {

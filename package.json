@@ -1,12 +1,12 @@
 {
   "name": "@bicycle-codes/crypto-util",
+  "version": "0.1.15",
   "description": "Cryptography utility functions for the browser or node",
   "directories": {
     "example": "example",
     "test": "test"
   },
   "type": "module",
-  "version": "0.1.15",
   "main": "dist/index.js",
   "files": [
     "./dist/*"
