@@ -12,8 +12,8 @@ import {
     RSA_HASHING_ALGORITHM,
     DEFAULT_RSA_SIZE,
     DEFAULT_STRING_ENCODING
-} from '../constants'
-import { checkValidKeyUse } from '../errors'
+} from '../constants.js'
+import { checkValidKeyUse } from '../errors.js'
 import { importKey as importAesKey } from '../aes/webcrypto.js'
 import {
     base64ToArrBuf,
@@ -22,9 +22,9 @@ import {
     isCryptoKey,
     publicExponent,
     arrBufToBase64,
-} from '../util'
-import { KeyUse } from '../types'
-import type { RsaSize, Msg, CharSize, HashAlg, DID, PublicKey } from '../types'
+} from '../util.js'
+import { KeyUse } from '../types.js'
+import type { RsaSize, Msg, CharSize, HashAlg, DID, PublicKey } from '../types.js'
 
 export async function verify (
     msg:Msg,

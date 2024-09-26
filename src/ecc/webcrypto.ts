@@ -10,8 +10,8 @@ import {
     DEFAULT_ECC_CURVE,
     DEFAULT_SYMM_ALGORITHM,
     DEFAULT_SYMM_LEN,
-} from '../constants'
-import { checkValidKeyUse } from '../errors'
+} from '../constants.js'
+import { checkValidKeyUse } from '../errors.js'
 import type {
     Msg,
     PrivateKey,
@@ -22,18 +22,18 @@ import type {
     SymmKey,
     SymmAlg,
     DID
-} from '../types'
+} from '../types.js'
 import {
     KeyUse,
     EccCurve
-} from '../types'
+} from '../types.js'
 import * as aes from '../aes/webcrypto.js'
 import {
     normalizeUnicodeToBuf,
     normalizeBase64ToBuf,
     arrBufToBase64,
     base64ToArrBuf,
-} from '../util'
+} from '../util.js'
 
 /**
  * Create a new keypair.

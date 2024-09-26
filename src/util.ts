@@ -1,9 +1,9 @@
 import * as u from 'uint8arrays'
 import type libsodium from 'libsodium-wrappers'
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
-import type { KeyAlgorithm, Msg, JSONValue, LockKey, DID } from './types'
-import { CharSize } from './types'
-import { InvalidMaxValue } from './errors'
+import type { KeyAlgorithm, Msg, JSONValue, LockKey, DID } from './types.js'
+import { CharSize } from './types.js'
+import { InvalidMaxValue } from './errors.js'
 import {
     DEFAULT_CHAR_SIZE,
     DEFAULT_ENTROPY_SIZE,
@@ -12,7 +12,7 @@ import {
     EDWARDS_DID_PREFIX,
     BLS_DID_PREFIX,
     BASE58_DID_PREFIX
-} from './constants'
+} from './constants.js'
 
 export const normalizeToBuf = (
     msg:Msg,

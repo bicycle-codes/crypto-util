@@ -1,7 +1,7 @@
 import libsodium from 'libsodium-wrappers'
 import * as u from 'uint8arrays'
-import type { LockKey, JSONValue, DID } from '../types'
-import { BASE58_DID_PREFIX } from '../constants'
+import type { LockKey, JSONValue, DID } from '../types.js'
+import { BASE58_DID_PREFIX } from '../constants.js'
 import {
     generateEntropy,
     fromString,
@@ -9,10 +9,8 @@ import {
     toString,
     stringify,
     magicBytes,
-} from '../util'
+} from '../util.js'
 import { didToPublicKey } from '../index.js'
-// import Debug from '@bicycle-codes/debug'
-// const debug = Debug()
 
 export { stringify }
 
