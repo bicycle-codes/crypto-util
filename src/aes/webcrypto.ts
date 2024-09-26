@@ -134,7 +134,7 @@ export async function importKey (
 /**
  * Create a new AES key.
  */
-export function create (opts:{ alg, length } = {
+export function create (opts:{ alg:SymmAlg, length } = {
     alg: DEFAULT_SYMM_ALGORITHM,
     length: DEFAULT_SYMM_LEN
 }):Promise<CryptoKey> {
