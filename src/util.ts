@@ -135,19 +135,56 @@ export function arrBufToBase64 (buf:ArrayBuffer):string {
 /**
  * Convert Uint8Arrays to `base64pad` encoded strings.
  *
- * @param arr Input `Uint8Array`
- * @returns `base64pad` encoded string
+ * @param {Uint8Array} arr Input `Uint8Array`
+ * @returns {string} `base64pad` encoded string
  */
 export function toString (arr:Uint8Array) {
     return u.toString(arr, 'base64pad')
 }
 
-export function base64ToArrBuf (string:string):ArrayBuffer {
-    return u.fromString(string, 'base64pad').buffer
+/**
+ * Convert a given string to an `ArrayBuffer`.
+ *
+ * @param {string} str input string
+ * @returns {ArrayBuffer} Array buffer
+ */
+export function base64ToArrBuf (str:string):ArrayBuffer {
+    return u.fromString(str, 'base64pad').buffer
 }
 
-export async function sha256 (bytes:Uint8Array):Promise<Uint8Array> {
-    return new Uint8Array(await webcrypto.subtle.digest('sha-256', bytes))
+export async function sha256 (
+    bytes:string|Uint8Array,
+    opts?:{ output:'string' }
+):Promise<string>
+
+export async function sha256 (
+    bytes:string|Uint8Array,
+    opts:{ output:'bytes' }
+):Promise<Uint8Array>
+
+/**
+ * Create a sha-256 hash of the given `Uint8Array`.
+ * @param {Uint8Array|string} bytes The input bytes
+ * @returns {Promise<Uint8Array>} A `Uint8Array`
+ */
+export async function sha256 (
+    bytes:Uint8Array|string,
+    opts:{ output:'string'|'bytes' } = { output: 'string' }
+):Promise<Uint8Array|string> {
+    let _bytes:Uint8Array
+    if (typeof bytes === 'string') {
+        _bytes = u.fromString(bytes)
+    } else {
+        _bytes = bytes
+    }
+
+    const hash = new Uint8Array(await webcrypto.subtle.digest('sha-256', _bytes))
+
+    if (opts.output === 'string') {
+        return toString(hash)
+    }
+
+    return hash
 }
 
 export function isCryptoKeyPair (val:unknown):val is CryptoKeyPair {

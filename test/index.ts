@@ -36,6 +36,20 @@ import {
     didToPublicKey,
 } from '../src/index.js'
 import { KeyUse, type DID } from '../src/types.js'
+import { sha256 } from '../src/util.js'
+
+// ---------------------------------------------------
+// Misc
+// ---------------------------------------------------
+test('sha-256 hash', async t => {
+    const hash = await sha256('hello')
+    t.equal(typeof hash, 'string', 'should return a string')
+    t.equal(hash, 'LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ=',
+        'should return the expected hash')
+
+    const hash2 = await sha256('hello', { output: 'bytes' })
+    t.ok(hash2 instanceof Uint8Array, 'should return a `Uin8Array` given args')
+})
 
 // ---------------------------------------------------
 // AES
