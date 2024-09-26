@@ -49,6 +49,14 @@
       "import": "./dist/webcrypto.js",
       "require": "./dist/webcrypto.cjs"
     },
+    "./constants": {
+      "import": "./dist/constants.js",
+      "require": "./dist/constants.cjs"
+    },
+    "./types": {
+      "import": "./dist/types.js",
+      "require": "./dist/types.cjs"
+    },
     "./sodium/aes": {
       "import": "./dist/sodium/aes.js",
       "require": "./dist/sodium/aes.cjs"
@@ -68,10 +76,6 @@
     "./webcrypto/ecc": {
       "import": "./dist/ecc/webcrypto.js",
       "require": "./dist/ecc/webcrypto.cjs"
-    },
-    "./types": {
-      "import": "./dist/types.js",
-      "require": "./dist/types.cjs"
     },
     "./*": {
       "import": [
