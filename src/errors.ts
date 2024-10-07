@@ -1,4 +1,4 @@
-import { KeyUse } from './types'
+import { KeyUse } from './types.js'
 
 const InvalidKeyUse = new Error("Invalid key use. Please use 'encryption' or 'signing")
 export const InvalidMaxValue = new Error('Max must be less than 256 and greater than 0')
