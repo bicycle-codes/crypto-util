@@ -1,22 +1,36 @@
 import libsodium from 'libsodium-wrappers'
 import * as u from 'uint8arrays'
 import type { LockKey, JSONValue, DID } from '../types.js'
+import { BASE58_DID_PREFIX } from '../constants.js'
 import {
     generateEntropy,
     fromString,
     asBufferOrString,
     toString,
     stringify,
-    publicKeyToDid
-} from '../util'
+    magicBytes,
+} from '../util.js'
 import { didToPublicKey } from '../index.js'
 
-export { stringify, publicKeyToDid }
+export { stringify }
 
 const CURRENT_LOCK_KEY_FORMAT_VERSION = 1
 
 export function importPublicKey (key:string):Uint8Array {
     return fromString(key)
+}
+
+/**
+ * Convert a public key to a DID format string.
+ */
+export async function publicKeyToDid (
+    publicKey:Uint8Array
+):Promise<DID> {
+    const prefix = magicBytes.ed25519
+    const prefixedBuf = u.concat([prefix, publicKey])
+
+    return (BASE58_DID_PREFIX +
+        u.toString(prefixedBuf, 'base58btc')) as DID
 }
 
 /**
