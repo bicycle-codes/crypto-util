@@ -234,8 +234,8 @@ export function fromString (str:string) {
 }
 
 /**
- * Parse magic bytes on prefixed key-buffer
- * to determine cryptosystem & the unprefixed key-buffer.
+ * Parse magic bytes on prefixed key-buffer to determine the
+ * cryptosystem & the unprefixed key-buffer.
  */
 export function parseMagicBytes (prefixedKey:ArrayBuffer) {
     // RSA
@@ -308,6 +308,19 @@ export const magicBytes:Record<KeyAlgorithm, Uint8Array> = {
     'bls12-381': new Uint8Array([0xea, 0x01]),
     ed25519: new Uint8Array([0xed, 0x01]),
     rsa: new Uint8Array([0x00, 0xf5, 0x02]),
+}
+
+/**
+ * Convert a public key to a DID format string.
+ */
+export async function publicKeyToDid (
+    publicKey:Uint8Array
+):Promise<DID> {
+    const prefix = magicBytes.ed25519
+    const prefixedBuf = u.concat([prefix, publicKey])
+
+    return (BASE58_DID_PREFIX +
+        u.toString(prefixedBuf, 'base58btc')) as DID
 }
 
 export function didToPublicKey (did:DID):({
