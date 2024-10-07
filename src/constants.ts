@@ -1,4 +1,4 @@
-import { CharSize, HashAlg, RsaSize, SymmKeyLength, EccCurve } from './types'
+import { CharSize, HashAlg, RsaSize, SymmKeyLength, EccCurve } from './types.js'
 
 // ECC
 export const DEFAULT_ECC_CURVE = EccCurve.P_256

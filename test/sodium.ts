@@ -15,7 +15,7 @@ import {
     encrypt as encryptAes,
     decrypt as decryptAes
 } from '../src/sodium/aes'
-import type { DID } from '../src/types'
+import type { DID } from '../src/types.js'
 import type { LockKey } from '../src'
 
 test('', t => {
@@ -40,7 +40,7 @@ test('sign something, return Uint8Array', async t => {
 
 let did:DID
 test('transform the public key into a DID', async t => {
-    const pubKey = did = await publicKeyToDid(alicesKeys.publicKey)
+    const pubKey = did = await publicKeyToDid.ecc(alicesKeys.publicKey)
     t.ok(pubKey.startsWith('did:key:z'))
 })
 
