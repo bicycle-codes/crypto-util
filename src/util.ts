@@ -1,5 +1,6 @@
 import * as u from 'uint8arrays'
 import type libsodium from 'libsodium-wrappers'
+import { concat, toString as uToString } from 'uint8arrays'
 import { webcrypto } from '@bicycle-codes/one-webcrypto'
 import type { KeyAlgorithm, Msg, JSONValue, LockKey, DID } from './types.js'
 import { CharSize } from './types.js'
@@ -310,17 +311,22 @@ export const magicBytes:Record<KeyAlgorithm, Uint8Array> = {
     rsa: new Uint8Array([0x00, 0xf5, 0x02]),
 }
 
-/**
- * Convert a public key to a DID format string.
- */
-export async function publicKeyToDid (
-    publicKey:Uint8Array
-):Promise<DID> {
-    const prefix = magicBytes.ed25519
-    const prefixedBuf = u.concat([prefix, publicKey])
+export const publicKeyToDid = {
+    ecc: function (publicKey:Uint8Array):DID {
+        const prefix = magicBytes.ed25519
+        const prefixedBuf = concat([prefix, publicKey])
 
-    return (BASE58_DID_PREFIX +
-        u.toString(prefixedBuf, 'base58btc')) as DID
+        return (BASE58_DID_PREFIX +
+            uToString(prefixedBuf, 'base58btc')) as DID
+    },
+
+    rsa: function (publicKey:Uint8Array) {
+        const prefix = magicBytes.rsa
+        const prefixedBuf = concat([prefix, publicKey])
+
+        return (BASE58_DID_PREFIX +
+            uToString(prefixedBuf, 'base58btc')) as DID
+    }
 }
 
 export function didToPublicKey (did:DID):({

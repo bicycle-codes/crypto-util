@@ -288,7 +288,7 @@ export async function importDid (did:DID):Promise<PublicKey> {
 }
 
 /**
- * Convert a public key to a DID format string.
+ * Convert an ed25519 public key to a DID format string.
  */
 export async function publicKeyToDid (
     publicKey:Uint8Array|PublicKey
