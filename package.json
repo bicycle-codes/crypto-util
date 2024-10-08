@@ -1,6 +1,6 @@
 {
   "name": "@bicycle-codes/crypto-util",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Cryptography utility functions for the browser or node",
   "directories": {
     "example": "example",
