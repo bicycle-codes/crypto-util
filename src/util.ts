@@ -263,10 +263,10 @@ export function parseMagicBytes (prefixedKey:ArrayBuffer) {
 }
 
 function hasPrefix (prefixedKey:ArrayBuffer, prefix:ArrayBuffer) {
-    return arrBufsEqual(prefix, prefixedKey.slice(0, prefix.byteLength))
+    return arrayBuffersEqual(prefix, prefixedKey.slice(0, prefix.byteLength))
 }
 
-function arrBufsEqual (aBuf:ArrayBuffer, bBuf:ArrayBuffer):boolean {
+export function arrayBuffersEqual (aBuf:ArrayBuffer, bBuf:ArrayBuffer):boolean {
     const a = new Uint8Array(aBuf)
     const b = new Uint8Array(bBuf)
     return buffersEqual(a, b)
