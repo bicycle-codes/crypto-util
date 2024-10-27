@@ -269,6 +269,10 @@ function hasPrefix (prefixedKey:ArrayBuffer, prefix:ArrayBuffer) {
 function arrBufsEqual (aBuf:ArrayBuffer, bBuf:ArrayBuffer):boolean {
     const a = new Uint8Array(aBuf)
     const b = new Uint8Array(bBuf)
+    return buffersEqual(a, b)
+}
+
+export function buffersEqual (a:Uint8Array, b:Uint8Array):boolean {
     if (a.length !== b.length) return false
     for (let i = 0; i < a.length; i++) {
         if (a[i] !== b[i]) return false
