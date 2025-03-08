@@ -5,7 +5,7 @@ import {
     joinBufs,
     randomBuf,
     fromString
-} from '../util'
+} from '../util.js'
 
 export async function create ():Promise<string>
 export async function create (opts:{

@@ -8,7 +8,7 @@ import {
     toString,
     stringify,
     publicKeyToDid
-} from '../util'
+} from '../util.js'
 import { didToPublicKey } from '../index.js'
 
 export { stringify, publicKeyToDid }
